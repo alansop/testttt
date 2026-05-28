@@ -107,7 +107,34 @@ export async function fetchYahooOHLC(symbol, interval, range) {
   };
 }
 
-export async function callGemini({ apiKey, model, systemPrompt, userPrompt }) {
+async function callGroq({ apiKey, model, systemPrompt, userPrompt }) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: model || "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 600,
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq HTTP ${res.status}: ${errText.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new Error("Groq: resposta sem texto");
+  return text.trim().replace(/^["']|["']$/g, "");
+}
+
+async function callGemini({ apiKey, model, systemPrompt, userPrompt }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const body = {
     system_instruction: { parts: [{ text: systemPrompt }] },
@@ -139,6 +166,11 @@ export async function callGemini({ apiKey, model, systemPrompt, userPrompt }) {
   return text.trim().replace(/^["']|["']$/g, "");
 }
 
+export async function callLLM({ provider, apiKey, model, systemPrompt, userPrompt }) {
+  if (provider === "groq") return callGroq({ apiKey, model, systemPrompt, userPrompt });
+  return callGemini({ apiKey, model, systemPrompt, userPrompt });
+}
+
 export function renderTemplate(template, vars) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, k) =>
     vars[k] == null ? "" : String(vars[k])
@@ -155,10 +187,14 @@ export async function buildAnalysis(assetKey, opts = {}) {
   const asset = ASSETS[assetKey];
   if (!asset) throw new Error(`Ativo desconhecido: ${assetKey}`);
 
-  const apiKey = opts.geminiKey || globalThis.process?.env?.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY não configurada");
-  const model =
-    opts.geminiModel || globalThis.process?.env?.GEMINI_MODEL || "gemini-2.0-flash";
+  const groqKey = opts.groqKey || globalThis.process?.env?.GROQ_API_KEY;
+  const geminiKey = opts.geminiKey || globalThis.process?.env?.GEMINI_API_KEY;
+  const provider = groqKey ? "groq" : "gemini";
+  const apiKey = groqKey || geminiKey;
+  if (!apiKey) throw new Error("Configure GROQ_API_KEY ou GEMINI_API_KEY");
+  const defaultModel = provider === "groq" ? "llama-3.3-70b-versatile" : "gemini-2.0-flash";
+  const model = opts.model || globalThis.process?.env?.LLM_MODEL ||
+    (provider === "gemini" ? globalThis.process?.env?.GEMINI_MODEL : null) || defaultModel;
 
   const ohlc = await fetchYahooOHLC(
     asset.yahoo,
@@ -176,7 +212,8 @@ export async function buildAnalysis(assetKey, opts = {}) {
     timeframe: asset.timeframe,
   });
 
-  const analiseTexto = await callGemini({
+  const analiseTexto = await callLLM({
+    provider,
     apiKey,
     model,
     systemPrompt: opts.systemPrompt || SYSTEM_PROMPT,

@@ -124,7 +124,9 @@ async function processAsset(assetKey, pageTpl) {
 }
 
 async function main() {
-  requireEnv("GEMINI_API_KEY");
+  if (!process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) {
+    throw new Error("Configure GROQ_API_KEY ou GEMINI_API_KEY no .env");
+  }
 
   const pageTpl = await fs.readFile(
     path.join(ROOT, "templates/page.html"),

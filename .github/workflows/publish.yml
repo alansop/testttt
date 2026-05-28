@@ -63,9 +63,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/
           if git diff --staged --quiet; then
-            echo "Sem mudanças para commitar."
+            echo "Sem mudancas para commitar."
           else
-            git commit -m "chore(analise): atualiza páginas — $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git commit -m "chore(analise): atualiza paginas — $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git pull --rebase origin main
             git push
           fi
 

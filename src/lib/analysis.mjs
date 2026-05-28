@@ -3,6 +3,26 @@
 
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from "./prompts.mjs";
 
+// Lê cache RTD gerado pelo profit-bridge.ps1 (apenas em ambiente Node, não no Edge)
+async function readRtdCache(assetKey) {
+  try {
+    const { readFile } = await import("node:fs/promises");
+    const { resolve, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+    const raw = await readFile(resolve(root, "data/rtd-cache.json"), "utf8");
+    const cache = JSON.parse(raw);
+    const entry = cache[assetKey];
+    if (!entry) return null;
+    // Rejeita cache com mais de 20 minutos
+    const age = Date.now() - new Date(entry.ts).getTime();
+    if (age > 20 * 60 * 1000) return null;
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
 export const ASSETS = {
   IBOV: {
     key: "IBOV",
@@ -22,6 +42,7 @@ export const ASSETS = {
     yahoo: "^BVSP",
     yahooInterval: "15m",
     yahooRange: "1d",
+    lastCandleOnly: true,
     timeframe: "Gráfico Intraday de 15 minutos (M15)",
     tvSymbol: "BMFBOVESPA:WIN1!",
     tvInterval: "15",
@@ -34,6 +55,7 @@ export const ASSETS = {
     yahoo: "BRL=X",
     yahooInterval: "15m",
     yahooRange: "1d",
+    lastCandleOnly: true,
     timeframe: "Gráfico Intraday de 15 minutos (M15)",
     tvSymbol: "BMFBOVESPA:WDO1!",
     tvInterval: "15",
@@ -61,12 +83,11 @@ export function formatNumber(value, decimals) {
   });
 }
 
-export async function fetchYahooOHLC(symbol, interval, range) {
+export async function fetchYahooOHLC(symbol, interval, range, { lastCandleOnly = false } = {}) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${range}`;
   const res = await fetch(url, {
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; AnaliseTecnicaBot/1.0)",
+      "User-Agent": "Mozilla/5.0 (compatible; AnaliseTecnicaBot/1.0)",
       Accept: "application/json",
     },
   });
@@ -77,21 +98,47 @@ export async function fetchYahooOHLC(symbol, interval, range) {
 
   const meta = result.meta;
   const q = result.indicators?.quote?.[0] || {};
-  const opens = (q.open || []).filter((v) => v != null);
-  const highs = (q.high || []).filter((v) => v != null);
-  const lows = (q.low || []).filter((v) => v != null);
-  const closes = (q.close || []).filter((v) => v != null);
+  const rawOpens  = q.open  || [];
+  const rawHighs  = q.high  || [];
+  const rawLows   = q.low   || [];
+  const rawCloses = q.close || [];
 
-  if (opens.length === 0 || closes.length === 0) {
-    throw new Error(`Yahoo Finance ${symbol}: série OHLC vazia`);
+  // índices não-nulos
+  const validIdx = rawCloses
+    .map((v, i) => (v != null ? i : null))
+    .filter((i) => i !== null);
+
+  if (validIdx.length === 0) throw new Error(`Yahoo Finance ${symbol}: série OHLC vazia`);
+
+  let open, high, low, close, prevClose;
+
+  if (lastCandleOnly && validIdx.length >= 2) {
+    // Último candle completo: prevClose = penúltimo fechamento
+    const last = validIdx[validIdx.length - 1];
+    const prev = validIdx[validIdx.length - 2];
+    open  = rawOpens[last]  ?? rawCloses[last];
+    high  = rawHighs[last]  ?? rawCloses[last];
+    low   = rawLows[last]   ?? rawCloses[last];
+    close = rawCloses[last];
+    prevClose = rawCloses[prev];
+  } else {
+    // Sessão completa: agrega todos os candles
+    const opens  = validIdx.map((i) => rawOpens[i]).filter(Boolean);
+    const highs  = validIdx.map((i) => rawHighs[i]).filter(Boolean);
+    const lows   = validIdx.map((i) => rawLows[i]).filter(Boolean);
+    const closes = validIdx.map((i) => rawCloses[i]);
+    open  = opens[0];
+    high  = Math.max(...highs);
+    low   = Math.min(...lows);
+    close = closes[closes.length - 1];
+    prevClose =
+      meta.chartPreviousClose ??
+      meta.previousClose ??
+      meta.regularMarketPreviousClose ??
+      null;
   }
 
-  const open = opens[0];
-  const high = Math.max(...highs);
-  const low = Math.min(...lows);
-  const close = closes[closes.length - 1];
-  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? open;
-  const percent_change = ((close - prevClose) / prevClose) * 100;
+  const percent_change = prevClose ? ((close - prevClose) / prevClose) * 100 : 0;
 
   return {
     open,
@@ -101,9 +148,7 @@ export async function fetchYahooOHLC(symbol, interval, range) {
     percent_change,
     prevClose,
     currency: meta.currency,
-    asOf: meta.regularMarketTime
-      ? new Date(meta.regularMarketTime * 1000)
-      : new Date(),
+    asOf: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date(),
   };
 }
 
@@ -196,11 +241,22 @@ export async function buildAnalysis(assetKey, opts = {}) {
   const model = opts.model || globalThis.process?.env?.LLM_MODEL ||
     (provider === "gemini" ? globalThis.process?.env?.GEMINI_MODEL : null) || defaultModel;
 
-  const ohlc = await fetchYahooOHLC(
-    asset.yahoo,
-    asset.yahooInterval,
-    asset.yahooRange
-  );
+  // Tenta usar dados ao vivo do Profit (RTD) para WIN e WDO
+  let ohlc;
+  const rtd = asset.key !== "IBOV" ? await readRtdCache(asset.key) : null;
+  if (rtd) {
+    // Busca apenas prevClose do Yahoo para calcular variação
+    const yahoo = await fetchYahooOHLC(asset.yahoo, asset.yahooInterval, asset.yahooRange, {}).catch(() => null);
+    const prevClose = yahoo?.prevClose ?? null;
+    const percent_change = prevClose ? ((rtd.close - prevClose) / prevClose) * 100 : 0;
+    ohlc = { open: rtd.open, high: rtd.high, low: rtd.low, close: rtd.close,
+              prevClose, percent_change, currency: "BRL", asOf: new Date(rtd.ts) };
+  } else {
+    ohlc = await fetchYahooOHLC(
+      asset.yahoo, asset.yahooInterval, asset.yahooRange,
+      { lastCandleOnly: asset.lastCandleOnly ?? false }
+    );
+  }
 
   const userPrompt = renderTemplate(opts.userPromptTpl || USER_PROMPT_TEMPLATE, {
     ativo: asset.nome,

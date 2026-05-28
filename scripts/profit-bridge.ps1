@@ -11,12 +11,36 @@ $OutputPath = Join-Path $OutputDir "rtd-cache.json"
 $RootDir    = Resolve-Path "$PSScriptRoot\.."
 $FullExcel  = Join-Path $RootDir $ExcelFile
 
+# Colunas (base 1, iniciando em D=4):
+# D=4  Asset
+# E=5  Data
+# F=6  Hora
+# G=7  Ultimo (close)
+# H=8  Abertura (open)
+# I=9  Maximo (high)
+# J=10 Minimo (low)
+# K=11 Fechamento Anterior (prev_close)
+# L=12 Strike
+# M=13 Variacao %
+# N=14 Variacao pts
+# O=15 Nome do Ativo
+# P=16 Negocios
+# Q=17 Volume
+# AD=30 IFR (RSI)
+# AF=32 Volatilidade Historica Media
+
 function Get-AssetKey {
     param([string]$nome)
-    if ($nome -eq "IBOV")    { return "IBOV" }
-    if ($nome -like "WIN*")  { return "WIN" }
-    if ($nome -like "WDO*")  { return "WDO" }
+    if ($nome -eq "IBOV")   { return "IBOV" }
+    if ($nome -like "WIN*") { return "WIN" }
+    if ($nome -like "WDO*") { return "WDO" }
     return $null
+}
+
+function ToNum {
+    param($v)
+    if ($null -eq $v -or $v -eq "") { return $null }
+    try { return [double]$v } catch { return $null }
 }
 
 function Log {
@@ -25,12 +49,10 @@ function Log {
 }
 
 Log "Conectando ao Excel..."
-
 $excel  = $null
 $opened = $false
 
 try {
-    # Tenta conectar ao Excel ja aberto
     try {
         $excel = [System.Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")
         Log "Excel ja esta aberto."
@@ -41,13 +63,9 @@ try {
         $opened = $true
     }
 
-    # Localiza a pasta de trabalho RTD
     $wb = $null
     foreach ($w in $excel.Workbooks) {
-        if ($w.Name -like "*rtd*") {
-            $wb = $w
-            break
-        }
+        if ($w.Name -like "*rtd*") { $wb = $w; break }
     }
 
     if (-not $wb) {
@@ -61,48 +79,60 @@ try {
     }
 
     $ws = $wb.Sheets.Item(1)
-
-    # Le linhas 2 a 4 (dados dos ativos)
     $result = @{}
 
-    for ($row = 2; $row -le 4; $row++) {
+    for ($row = 2; $row -le 10; $row++) {
         $nome = $ws.Cells.Item($row, 4).Value2
         if (-not $nome) { continue }
 
         $key = Get-AssetKey $nome
         if (-not $key) { continue }
 
-        $close = $ws.Cells.Item($row, 7).Value2
-        $open  = $ws.Cells.Item($row, 8).Value2
-        $high  = $ws.Cells.Item($row, 9).Value2
-        $low   = $ws.Cells.Item($row, 10).Value2
-        $date  = $ws.Cells.Item($row, 5).Value2
-        $time  = $ws.Cells.Item($row, 6).Value2
+        $close     = ToNum $ws.Cells.Item($row, 7).Value2
+        $open      = ToNum $ws.Cells.Item($row, 8).Value2
+        $high      = ToNum $ws.Cells.Item($row, 9).Value2
+        $low       = ToNum $ws.Cells.Item($row, 10).Value2
+        $prevClose = ToNum $ws.Cells.Item($row, 11).Value2
+        $varPct    = ToNum $ws.Cells.Item($row, 13).Value2
+        $varPts    = ToNum $ws.Cells.Item($row, 14).Value2
+        $volume    = ToNum $ws.Cells.Item($row, 17).Value2
+        $rsiRaw    = ToNum $ws.Cells.Item($row, 30).Value2
+        $rsi       = if ($null -ne $rsiRaw -and $rsiRaw -ge 0 -and $rsiRaw -le 100) { $rsiRaw } else { $null }
+        $histVol   = ToNum $ws.Cells.Item($row, 32).Value2
+        $date      = "$($ws.Cells.Item($row, 5).Value2)"
+        $time      = "$($ws.Cells.Item($row, 6).Value2)"
 
-        if (-not $close) {
+        if ($null -eq $close) {
             Log "AVISO: $nome sem dados. Profit conectado?"
             continue
         }
 
         $result[$key] = @{
-            nome  = "$nome"
-            open  = [double]$open
-            high  = [double]$high
-            low   = [double]$low
-            close = [double]$close
-            date  = "$date"
-            time  = "$time"
-            ts    = (Get-Date -Format "o")
+            nome       = "$nome"
+            open       = $open
+            high       = $high
+            low        = $low
+            close      = $close
+            prev_close = $prevClose
+            var_pct    = $varPct
+            var_pts    = $varPts
+            volume     = $volume
+            rsi        = $rsi
+            hist_vol   = $histVol
+            date       = $date
+            time       = $time
+            ts         = (Get-Date -Format "o")
         }
 
-        Log "${key} (${nome}): O=$open H=$high L=$low C=$close"
+        $varStr = if ($null -ne $varPct) { "$([math]::Round($varPct,2))%" } else { "n/d" }
+        $rsiStr = if ($null -ne $rsi) { "RSI=$([math]::Round($rsi,1))" } else { "" }
+        Log "${key} (${nome}): C=$close Ant=$prevClose Var=$varStr $rsiStr"
     }
 
     if ($result.Count -eq 0) {
         throw "Nenhum dado lido. Verifique se o Profit esta conectado e o RTD ativo no Excel."
     }
 
-    # Salva JSON sem BOM (PowerShell 5.1 adiciona BOM com Out-File -Encoding utf8)
     New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
     $json = $result | ConvertTo-Json -Depth 3
     [System.IO.File]::WriteAllText($OutputPath, $json, [System.Text.UTF8Encoding]::new($false))
@@ -112,9 +142,7 @@ try {
     Write-Host "ERRO: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 } finally {
-    if ($opened -and $wb) {
-        $wb.Close($false)
-    }
+    if ($opened -and $wb) { $wb.Close($false) }
     if ($opened -and $excel) {
         [System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel) | Out-Null
     }

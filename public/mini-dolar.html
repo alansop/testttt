@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Mini Dólar Futuro (WDO) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Mini Dólar Futuro (WDO) | Genial Investimentos" />
-  <meta property="og:description" content="O Mini Dólar Futuro apresentou um comportamento de consolidação no último pregão, com um fechamento ligeiramente acima da abertura. Os valores exatos de suporte e resistência mais …" />
+  <meta property="og:description" content="O Mini Dólar Futuro apresentou um comportamento de consolidação no último pregão, com um fechamento em 5.064, após atingir uma máxima de 5.074 e uma mínima de 5.034. Os valores exa…" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Mini Dólar Futuro (WDO) | Genial Investimentos</title>
@@ -107,7 +107,7 @@
     </header>
 
     <h1>Mini Dólar Futuro (WDO) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 27/05/2026, 23:09</div>
+    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 27/05/2026, 23:16</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -116,29 +116,24 @@
         </div>
         <div class="card-body" style="padding: 0;">
           <div class="chart-wrap">
-            <div class="tradingview-widget-container">
-              <div id="tradingview_chart"></div>
-              <script src="https://s3.tradingview.com/tv.js"></script>
-              <script>
-                new TradingView.widget({
-                  autosize: true,
-                  symbol: "BMFBOVESPA:WDO1!",
-                  interval: "15",
-                  timezone: "America/Sao_Paulo",
-                  theme: "dark",
-                  style: "1",
-                  locale: "br",
-                  toolbar_bg: "#131c30",
-                  enable_publishing: false,
-                  hide_side_toolbar: false,
-                  allow_symbol_change: false,
-                  withdateranges: true,
-                  studies: [
-                    "MASimple@tv-basicstudies",
-                    "RSI@tv-basicstudies"
-                  ],
-                  container_id: "tradingview_chart"
-                });
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+                "autosize": true,
+                "symbol": "BMFBOVESPA:WDO1!",
+                "interval": "15",
+                "timezone": "America/Sao_Paulo",
+                "theme": "dark",
+                "style": "1",
+                "locale": "br",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": false,
+                "withdateranges": true,
+                "studies": ["STD;MA", "STD;RSI"],
+                "support_host": "https://www.tradingview.com"
+              }
               </script>
             </div>
           </div>
@@ -157,7 +152,7 @@
             </div>
             <div class="quote-cell">
               <span class="quote-label">Variação</span>
-              <span class="quote-value quote-change positive">0.10%</span>
+              <span class="quote-value quote-change positive">0.50%</span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Máx.</span>
@@ -169,12 +164,12 @@
             </div>
           </div>
 
-          <p class="analise-tecnica">O Mini Dólar Futuro apresentou um comportamento de consolidação no último pregão, com um fechamento ligeiramente acima da abertura. Os valores exatos de suporte e resistência mais próximos são 5.034 e 5.074, respectivamente. A manutenção acima do suporte de 5.034 tende a fortalecer o viés de alta, enquanto a perda desse nível pode abrir espaço para uma movimentação mais baixa. O fechamento em 5.064 sugere que o ativo está se posicionando para uma possível continuação da alta, caso consiga superar a resistência de 5.074. O cenário sugere que a região de preço acima de 5.074 pode confirmar o viés de alta, enquanto a perda do suporte de 5.034 pode invalidar essa perspectiva. O próximo pregão deve ser observado com atenção à manutenção ou perda desses níveis técnicos.</p>
+          <p class="analise-tecnica">O Mini Dólar Futuro apresentou um comportamento de consolidação no último pregão, com um fechamento em 5.064, após atingir uma máxima de 5.074 e uma mínima de 5.034. Os valores exatos de suporte e resistência mais próximos são 5.034 e 5.074, respectivamente. A manutenção acima do suporte de 5.034 tende a abrir espaço para uma continuação da tendência de alta, enquanto a perda desse nível pode levar a uma correção. O viés esperado para o próximo pregão é de alta, com a região de preço acima de 5.074 confirmado o cenário de continuação da alta. A manutenção abaixo de 5.034 pode invalidar esse cenário e levar a uma lateralização. O comportamento do ativo nos próximos pregões será crucial para definir a direção da tendência.</p>
 
           <div class="meta">
             <span>Abertura: <strong>5.039</strong></span>
             <span>Timeframe: <strong>Gráfico Intraday de 15 minutos (M15)</strong></span>
-            <span>Última coleta: <strong>27/05/2026, 23:09</strong></span>
+            <span>Última coleta: <strong>27/05/2026, 23:15</strong></span>
           </div>
         </div>
       </aside>

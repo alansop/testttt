@@ -1,11 +1,14 @@
 # run-local.ps1
 # Pipeline completo: Profit RTD -> analise -> GitHub Pages
-# Agende no Task Scheduler para rodar a cada 15min durante o pregao
+# Agende no Task Scheduler a cada 15min durante o pregao
 
 $Root = Resolve-Path "$PSScriptRoot\.."
 Set-Location $Root
 
-function Log($msg) { Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $msg" }
+function Log {
+    param([string]$msg)
+    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $msg"
+}
 
 Log "=== Pipeline Analise Tecnica ==="
 
@@ -13,7 +16,7 @@ Log "=== Pipeline Analise Tecnica ==="
 Log "Lendo dados do Profit..."
 & "$PSScriptRoot\profit-bridge.ps1"
 if ($LASTEXITCODE -ne 0) {
-    Log "AVISO: Profit indisponivel — usando Yahoo Finance como fallback"
+    Log "AVISO: Profit indisponivel. Usando Yahoo Finance como fallback."
 }
 
 # 2. Gera HTMLs
@@ -27,7 +30,7 @@ if ($LASTEXITCODE -ne 0) {
 # 3. Commit e push
 Log "Publicando no GitHub..."
 git add public/
-$changes = git diff --staged --quiet
+git diff --staged --quiet
 if ($LASTEXITCODE -ne 0) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm UTC"
     git commit -m "chore: analise $timestamp"

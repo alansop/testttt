@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Ibovespa (IBOV) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Ibovespa (IBOV) | Genial Investimentos" />
-  <meta property="og:description" content="O Ibovespa apresentou um comportamento de rejeição de fundo no último pregão, fechando em 175.744 após atingir uma máxima de 178.547 e uma mínima de 174.893. Os valores exatos de s…" />
+  <meta property="og:description" content="O Ibovespa apresentou um comportamento de retração no último pregão, fechando em 175.744, após atingir uma máxima de 178.547 e uma mínima de 174.893. Os valores exatos de suporte e…" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Ibovespa (IBOV) | Genial Investimentos</title>
@@ -107,7 +107,7 @@
     </header>
 
     <h1>Ibovespa (IBOV) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Diário (1D) · Atualizado em 27/05/2026, 23:09</div>
+    <div class="subtitle">Gráfico Diário (1D) · Atualizado em 27/05/2026, 23:16</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -116,29 +116,24 @@
         </div>
         <div class="card-body" style="padding: 0;">
           <div class="chart-wrap">
-            <div class="tradingview-widget-container">
-              <div id="tradingview_chart"></div>
-              <script src="https://s3.tradingview.com/tv.js"></script>
-              <script>
-                new TradingView.widget({
-                  autosize: true,
-                  symbol: "BMFBOVESPA:IBOV",
-                  interval: "D",
-                  timezone: "America/Sao_Paulo",
-                  theme: "dark",
-                  style: "1",
-                  locale: "br",
-                  toolbar_bg: "#131c30",
-                  enable_publishing: false,
-                  hide_side_toolbar: false,
-                  allow_symbol_change: false,
-                  withdateranges: true,
-                  studies: [
-                    "MASimple@tv-basicstudies",
-                    "RSI@tv-basicstudies"
-                  ],
-                  container_id: "tradingview_chart"
-                });
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+                "autosize": true,
+                "symbol": "BMFBOVESPA:IBOV",
+                "interval": "D",
+                "timezone": "America/Sao_Paulo",
+                "theme": "dark",
+                "style": "1",
+                "locale": "br",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": false,
+                "withdateranges": true,
+                "studies": ["STD;MA", "STD;RSI"],
+                "support_host": "https://www.tradingview.com"
+              }
               </script>
             </div>
           </div>
@@ -169,7 +164,7 @@
             </div>
           </div>
 
-          <p class="analise-tecnica">O Ibovespa apresentou um comportamento de rejeição de fundo no último pregão, fechando em 175.744 após atingir uma máxima de 178.547 e uma mínima de 174.893. Os valores exatos de suporte e resistência mais próximos são 174.893 e 178.547, respectivamente. A manutenção abaixo do suporte de 174.893 tende a abrir espaço para uma movimentação mais baixa, enquanto a resistência de 178.547 pode continuar a exercer pressão sobre o ativo. O viés direcional probabilístico para o próximo pregão sugere uma possível continuação da lateralização, com a região de 175.000 a 176.000 sendo crucial para confirmar ou invalidar o cenário de baixa. A perda do suporte de 174.893 pode fortalecer o viés de baixa, enquanto a manutenção acima de 175.744 pode indicar uma possível recuperação.</p>
+          <p class="analise-tecnica">O Ibovespa apresentou um comportamento de retração no último pregão, fechando em 175.744, após atingir uma máxima de 178.547 e uma mínima de 174.893. Os valores exatos de suporte e resistência mais próximos são 174.893 e 178.547, respectivamente. A manutenção abaixo do suporte de 174.893 tende a abrir espaço para uma continuação da tendência de baixa, enquanto a resistência de 178.547 pode limitar eventuais movimentos de alta. O cenário sugere um viés de baixa para o próximo pregão, com a região de preço abaixo de 174.893 confirmado o cenário de baixa, enquanto a manutenção acima de 175.744 pode indicar uma possível lateralização. A perda do suporte de 174.893 pode intensificar a pressão vendedora, enquanto a manutenção acima da resistência de 178.547 não é esperada no curto prazo.</p>
 
           <div class="meta">
             <span>Abertura: <strong>177.352</strong></span>

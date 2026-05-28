@@ -30,7 +30,7 @@ Dados de Mercado Coletados:
 - Mínima: {{low}}
 - Fechamento: {{close}}
 - Variação Percentual: {{percent_change}}%
-- Tempo Gráfico de Referência: {{timeframe}}
+- Tempo Gráfico de Referência: {{timeframe}}{{extraIndicadores}}
 
 Instruções de Estrutura:
 1. Inicie resumindo o comportamento do ativo no pregão (consolidação, rompimento de topo, rejeição de fundo etc.).

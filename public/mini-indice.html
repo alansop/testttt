@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Mini Índice (WIN) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Mini Índice (WIN) | Genial Investimentos" />
-  <meta property="og:description" content="O Mini Índice (WIN) apresentou um comportamento de consolidação no último pregão, com uma variação percentual de 0.11%, indicando uma relativa estabilidade. Os valores de suporte e…" />
+  <meta property="og:description" content="O Mini Índice (WIN) apresentou um comportamento de consolidação no último pregão, com uma variação percentual negativa de 0,53%. Os valores exatos de suporte e resistência mais pró…" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Mini Índice (WIN) | Genial Investimentos</title>
@@ -107,7 +107,7 @@
     </header>
 
     <h1>Mini Índice (WIN) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 27/05/2026, 23:09</div>
+    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 27/05/2026, 23:16</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -116,29 +116,24 @@
         </div>
         <div class="card-body" style="padding: 0;">
           <div class="chart-wrap">
-            <div class="tradingview-widget-container">
-              <div id="tradingview_chart"></div>
-              <script src="https://s3.tradingview.com/tv.js"></script>
-              <script>
-                new TradingView.widget({
-                  autosize: true,
-                  symbol: "BMFBOVESPA:WIN1!",
-                  interval: "15",
-                  timezone: "America/Sao_Paulo",
-                  theme: "dark",
-                  style: "1",
-                  locale: "br",
-                  toolbar_bg: "#131c30",
-                  enable_publishing: false,
-                  hide_side_toolbar: false,
-                  allow_symbol_change: false,
-                  withdateranges: true,
-                  studies: [
-                    "MASimple@tv-basicstudies",
-                    "RSI@tv-basicstudies"
-                  ],
-                  container_id: "tradingview_chart"
-                });
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+                "autosize": true,
+                "symbol": "BMFBOVESPA:WIN1!",
+                "interval": "15",
+                "timezone": "America/Sao_Paulo",
+                "theme": "dark",
+                "style": "1",
+                "locale": "br",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": false,
+                "withdateranges": true,
+                "studies": ["STD;MA", "STD;RSI"],
+                "support_host": "https://www.tradingview.com"
+              }
               </script>
             </div>
           </div>
@@ -157,7 +152,7 @@
             </div>
             <div class="quote-cell">
               <span class="quote-label">Variação</span>
-              <span class="quote-value quote-change positive">0.11%</span>
+              <span class="quote-value quote-change negative">-0.53%</span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Máx.</span>
@@ -169,12 +164,12 @@
             </div>
           </div>
 
-          <p class="analise-tecnica">O Mini Índice (WIN) apresentou um comportamento de consolidação no último pregão, com uma variação percentual de 0.11%, indicando uma relativa estabilidade. Os valores de suporte e resistência mais próximos e relevantes são 176.650, atuando como suporte, e 179.655, funcionando como resistência. A manutenção acima do suporte de 176.650 tende a fortalecer o viés de alta, enquanto a perda desse nível pode abrir espaço para uma movimentação de baixa. O cenário sugere que a manutenção acima de 176.790 pode indicar uma continuação da tendência de alta, enquanto a quebra do suporte de 176.650 pode levar a uma lateralização ou até mesmo a uma movimentação de baixa. O próximo pregão deve ser observado com atenção à região de 176.650 a 179.655, que pode confirmar ou invalidar o viés de alta.</p>
+          <p class="analise-tecnica">O Mini Índice (WIN) apresentou um comportamento de consolidação no último pregão, com uma variação percentual negativa de 0,53%. Os valores exatos de suporte e resistência mais próximos são 176.650 e 179.655, respectivamente, derivados das mínimas e máximas informadas. A manutenção abaixo do suporte de 176.650 tende a abrir espaço para uma continuação da tendência de baixa, enquanto a resistência de 179.655 pode ser um obstáculo para uma possível recuperação. O fechamento em 176.790 sugere um viés de baixa para o próximo pregão, com a região de preço abaixo de 176.650 confirmado o cenário de declínio. A perda do suporte de 176.650 pode intensificar a pressão vendedora, enquanto a manutenção acima de 176.790 pode indicar uma possível estabilização. O cenário sugere uma continuação da lateralização ou uma possível declínio.</p>
 
           <div class="meta">
             <span>Abertura: <strong>177.360</strong></span>
             <span>Timeframe: <strong>Gráfico Intraday de 15 minutos (M15)</strong></span>
-            <span>Última coleta: <strong>27/05/2026, 23:09</strong></span>
+            <span>Última coleta: <strong>27/05/2026, 23:15</strong></span>
           </div>
         </div>
       </aside>

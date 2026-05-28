@@ -246,19 +246,25 @@ export async function buildAnalysis(assetKey, opts = {}) {
   let ohlc;
   const rtd = asset.key !== "IBOV" ? await readRtdCache(asset.key) : null;
   if (rtd) {
-    // Busca prevClose do Yahoo e aplica escala se necessário (WDO: BRL=X × 1000 = B3 points)
-    const yahoo = await fetchYahooOHLC(asset.yahoo, asset.yahooInterval, asset.yahooRange, {}).catch(() => null);
-    const scale = asset.yahooScale ?? 1;
-    const prevClose = yahoo?.prevClose != null ? yahoo.prevClose * scale : null;
-    const percent_change = prevClose ? ((rtd.close - prevClose) / prevClose) * 100 : 0;
+    // Usa prevClose e variação diretamente do Profit — sem Yahoo Finance
+    const prevClose = rtd.prev_close ?? null;
+    const percent_change = rtd.var_pct != null
+      ? rtd.var_pct
+      : (prevClose ? ((rtd.close - prevClose) / prevClose) * 100 : 0);
     ohlc = { open: rtd.open, high: rtd.high, low: rtd.low, close: rtd.close,
-              prevClose, percent_change, currency: "BRL", asOf: new Date(rtd.ts) };
+              prevClose, percent_change, rsi: rtd.rsi, hist_vol: rtd.hist_vol,
+              volume: rtd.volume, currency: "BRL", asOf: new Date(rtd.ts) };
   } else {
     ohlc = await fetchYahooOHLC(
       asset.yahoo, asset.yahooInterval, asset.yahooRange,
       { lastCandleOnly: asset.lastCandleOnly ?? false }
     );
   }
+
+  const extraIndicadores = [
+    ohlc.rsi != null ? `- IFR (RSI-14): ${ohlc.rsi.toFixed(1)}` : null,
+    ohlc.hist_vol != null ? `- Volatilidade Histórica Média: ${ohlc.hist_vol.toFixed(2)}%` : null,
+  ].filter(Boolean).join("\n");
 
   const userPrompt = renderTemplate(opts.userPromptTpl || USER_PROMPT_TEMPLATE, {
     ativo: asset.nome,
@@ -268,6 +274,7 @@ export async function buildAnalysis(assetKey, opts = {}) {
     close: formatNumber(ohlc.close),
     percent_change: ohlc.percent_change.toFixed(2),
     timeframe: asset.timeframe,
+    extraIndicadores: extraIndicadores ? `\n${extraIndicadores}` : "",
   });
 
   const analiseTexto = await callLLM({

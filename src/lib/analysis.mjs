@@ -11,7 +11,7 @@ async function readRtdCache(assetKey) {
     const { fileURLToPath } = await import("node:url");
     const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
     const raw = await readFile(resolve(root, "data/rtd-cache.json"), "utf8");
-    const cache = JSON.parse(raw);
+    const cache = JSON.parse(raw.replace(/^﻿/, ""));
     const entry = cache[assetKey];
     if (!entry) return null;
     // Rejeita cache com mais de 20 minutos
@@ -56,6 +56,7 @@ export const ASSETS = {
     yahooInterval: "15m",
     yahooRange: "1d",
     lastCandleOnly: true,
+    yahooScale: 1000,
     timeframe: "Gráfico Intraday de 15 minutos (M15)",
     tvSymbol: "BMFBOVESPA:WDO1!",
     tvInterval: "15",
@@ -245,9 +246,10 @@ export async function buildAnalysis(assetKey, opts = {}) {
   let ohlc;
   const rtd = asset.key !== "IBOV" ? await readRtdCache(asset.key) : null;
   if (rtd) {
-    // Busca apenas prevClose do Yahoo para calcular variação
+    // Busca prevClose do Yahoo e aplica escala se necessário (WDO: BRL=X × 1000 = B3 points)
     const yahoo = await fetchYahooOHLC(asset.yahoo, asset.yahooInterval, asset.yahooRange, {}).catch(() => null);
-    const prevClose = yahoo?.prevClose ?? null;
+    const scale = asset.yahooScale ?? 1;
+    const prevClose = yahoo?.prevClose != null ? yahoo.prevClose * scale : null;
     const percent_change = prevClose ? ((rtd.close - prevClose) / prevClose) * 100 : 0;
     ohlc = { open: rtd.open, high: rtd.high, low: rtd.low, close: rtd.close,
               prevClose, percent_change, currency: "BRL", asOf: new Date(rtd.ts) };

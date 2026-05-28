@@ -123,14 +123,14 @@ export async function fetchYahooOHLC(symbol, interval, range, { lastCandleOnly =
     close = rawCloses[last];
     prevClose = rawCloses[prev];
   } else {
-    // Sessão completa: agrega todos os candles
-    const opens  = validIdx.map((i) => rawOpens[i]).filter(Boolean);
-    const highs  = validIdx.map((i) => rawHighs[i]).filter(Boolean);
-    const lows   = validIdx.map((i) => rawLows[i]).filter(Boolean);
+    // Sessão completa: agrega todos os candles (filter(Boolean) removeria 0, usar != null)
+    const opens  = validIdx.map((i) => rawOpens[i]).filter(v => v != null);
+    const highs  = validIdx.map((i) => rawHighs[i]).filter(v => v != null);
+    const lows   = validIdx.map((i) => rawLows[i]).filter(v => v != null);
     const closes = validIdx.map((i) => rawCloses[i]);
     open  = opens[0];
-    high  = Math.max(...highs);
-    low   = Math.min(...lows);
+    high  = highs.length ? Math.max(...highs) : null;
+    low   = lows.length  ? Math.min(...lows)  : null;
     close = closes[closes.length - 1];
     prevClose =
       meta.chartPreviousClose ??

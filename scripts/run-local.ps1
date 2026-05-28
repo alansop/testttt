@@ -1,5 +1,5 @@
 # run-local.ps1
-# Pipeline completo: Profit RTD -> analise -> GitHub Pages
+# Pipeline completo: Profit RTD -> analise -> GitHub Pages (gh-pages branch)
 # Agende no Task Scheduler a cada 15min durante o pregao
 
 $Root = Resolve-Path "$PSScriptRoot\.."
@@ -27,17 +27,46 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# 3. Commit e push
-Log "Publicando no GitHub..."
-git add public/
+# 3. Publica no gh-pages
+Log "Publicando no GitHub Pages (gh-pages)..."
+
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm UTC"
+$pubDir    = Join-Path $Root "public"
+$tmpBranch = "gh-pages"
+
+# Guarda os HTMLs gerados temporariamente
+$tmpDir = Join-Path $env:TEMP "analise-pages-$([System.IO.Path]::GetRandomFileName())"
+Copy-Item -Recurse -Force $pubDir $tmpDir
+
+# Troca para o branch gh-pages (cria se nao existir)
+$ghExists = git ls-remote --heads origin $tmpBranch 2>&1
+if ($ghExists -match $tmpBranch) {
+    git fetch origin $tmpBranch 2>&1 | Out-Null
+    git checkout $tmpBranch 2>&1 | Out-Null
+    git pull origin $tmpBranch 2>&1 | Out-Null
+} else {
+    git checkout --orphan $tmpBranch 2>&1 | Out-Null
+    git rm -rf . 2>&1 | Out-Null
+}
+
+# Copia HTMLs para a raiz do branch
+Copy-Item -Force "$tmpDir\public\*" $Root
+Remove-Item -Recurse -Force $tmpDir
+
+git config user.name "Alan Soares"
+git config user.email "alaansop@gmail.com"
+git add *.html index.html 2>&1 | Out-Null
+git add . 2>&1 | Out-Null
 git diff --staged --quiet
 if ($LASTEXITCODE -ne 0) {
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm UTC"
     git commit -m "chore: analise $timestamp"
-    git push origin main
-    Log "Publicado com sucesso."
+    git push origin $tmpBranch
+    Log "Publicado em gh-pages."
 } else {
     Log "Sem mudancas para publicar."
 }
+
+# Volta para main
+git checkout main 2>&1 | Out-Null
 
 Log "=== Concluido ==="

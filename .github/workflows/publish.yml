@@ -57,21 +57,7 @@ jobs:
           PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
         run: npm run generate
 
-      - name: Commitar páginas atualizadas
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/
-          if git diff --staged --quiet; then
-            echo "Sem mudancas para commitar."
-          else
-            git commit -m "chore(analise): atualiza paginas — $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git pull --rebase origin main
-            git push
-          fi
-
       - name: Publicar no GitHub Pages
-        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

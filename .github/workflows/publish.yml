@@ -1,0 +1,76 @@
+name: Publicar Análise Técnica
+
+on:
+  # IBOV — diário, após fechamento (18:30 BRT = 21:30 UTC)
+  schedule:
+    - cron: "30 21 * * 1-5"
+    # WIN/WDO — a cada 15 minutos durante o pregão (09:00–18:00 BRT = 12:00–21:00 UTC, seg-sex)
+    - cron: "*/15 12-21 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      assets:
+        description: "Ativos (ALL, IBOV, WIN, WDO ou lista separada por vírgula)"
+        required: false
+        default: "ALL"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm install
+
+      - name: Definir ativos pelo gatilho
+        id: which-assets
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "assets=${{ github.event.inputs.assets }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "30 21 * * 1-5" ]; then
+            echo "assets=IBOV" >> "$GITHUB_OUTPUT"
+          else
+            echo "assets=WIN,WDO" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gerar páginas
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.0-flash' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USER: ${{ secrets.WORDPRESS_USER }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_PAGE_ID_IBOV: ${{ secrets.WORDPRESS_PAGE_ID_IBOV }}
+          WORDPRESS_PAGE_ID_WIN: ${{ secrets.WORDPRESS_PAGE_ID_WIN }}
+          WORDPRESS_PAGE_ID_WDO: ${{ secrets.WORDPRESS_PAGE_ID_WDO }}
+          PUBLISH_ASSETS: ${{ steps.which-assets.outputs.assets }}
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+        run: npm run generate
+
+      - name: Commitar páginas atualizadas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/
+          if git diff --staged --quiet; then
+            echo "Sem mudanças para commitar."
+          else
+            git commit -m "chore(analise): atualiza páginas — $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
+
+      - name: Publicar no GitHub Pages
+        if: success()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: true

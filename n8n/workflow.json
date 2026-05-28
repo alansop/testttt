@@ -1,0 +1,205 @@
+{
+  "name": "Análise Técnica Genial — IBOV / WIN / WDO",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 21 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "trigger-daily",
+      "name": "Cron Diário 18:30 BRT (IBOV)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 200]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 12-21 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "trigger-intraday",
+      "name": "Cron 15min (WIN/WDO)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define quais ativos serão processados conforme o gatilho que disparou\nconst trigger = $input.first()?.json?.__triggerName || 'daily';\nconst assetsAll = [\n  { key: 'IBOV', nome: 'Ibovespa (IBOV)',        yahoo: '^BVSP', yahooInterval: '1d',  yahooRange: '5d', timeframe: 'Gráfico Diário (1D)',                       tvSymbol: 'BMFBOVESPA:IBOV', tvInterval: 'D',  slug: 'ibovespa'    },\n  { key: 'WIN',  nome: 'Mini Índice (WIN)',      yahoo: '^BVSP', yahooInterval: '15m', yahooRange: '1d', timeframe: 'Gráfico Intraday de 15 minutos (M15)',     tvSymbol: 'BMFBOVESPA:WIN1!', tvInterval: '15', slug: 'mini-indice'  },\n  { key: 'WDO',  nome: 'Mini Dólar Futuro (WDO)', yahoo: 'BRL=X', yahooInterval: '15m', yahooRange: '1d', timeframe: 'Gráfico Intraday de 15 minutos (M15)',     tvSymbol: 'BMFBOVESPA:WDO1!', tvInterval: '15', slug: 'mini-dolar'   }\n];\nconst isDaily = trigger.toLowerCase().includes('diário') || trigger.toLowerCase().includes('daily');\nconst filtered = isDaily ? assetsAll.filter(a => a.key === 'IBOV') : assetsAll.filter(a => a.key !== 'IBOV');\nreturn filtered.map(a => ({ json: a }));"
+      },
+      "id": "assets-list",
+      "name": "Define Ativos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://query1.finance.yahoo.com/v8/finance/chart/{{ encodeURIComponent($json.yahoo) }}?interval={{ $json.yahooInterval }}&range={{ $json.yahooRange }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent", "value": "Mozilla/5.0 AnaliseTecnicaBot/1.0" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        }
+      },
+      "id": "yahoo-fetch",
+      "name": "Yahoo Finance OHLC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai OHLC do payload do Yahoo Finance\nconst input = $input.first().json;\nconst asset = $('Define Ativos').first().json;\nconst result = input?.chart?.result?.[0];\nif (!result) throw new Error('Yahoo: resposta vazia para ' + asset.yahoo);\nconst meta = result.meta;\nconst q = result.indicators?.quote?.[0] || {};\nconst opens  = (q.open  || []).filter(v => v != null);\nconst highs  = (q.high  || []).filter(v => v != null);\nconst lows   = (q.low   || []).filter(v => v != null);\nconst closes = (q.close || []).filter(v => v != null);\nconst open  = opens[0];\nconst high  = Math.max(...highs);\nconst low   = Math.min(...lows);\nconst close = closes[closes.length - 1];\nconst prev  = meta.chartPreviousClose ?? meta.previousClose ?? open;\nconst pct   = ((close - prev) / prev) * 100;\nconst fmt = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\nreturn [{ json: { ...asset, open, high, low, close, percent_change: pct, openF: fmt(open), highF: fmt(high), lowF: fmt(low), closeF: fmt(close), pctF: pct.toFixed(2), changeClass: pct >= 0 ? 'positive' : 'negative', asOf: new Date().toISOString() }}];"
+      },
+      "id": "parse-ohlc",
+      "name": "Parse OHLC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"system_instruction\": { \"parts\": [{ \"text\": \"Você é um Analista CNPI-T sênior da Genial Investimentos. Escreva um parágrafo único de 5 a 8 linhas em português do Brasil, em tom institucional e probabilístico. NUNCA recomende compra/venda. Estrutura: (1) resumo do pregão, (2) suportes/resistências exatos derivados dos dados, (3) viés direcional para o próximo pregão e região que confirma. Retorne SOMENTE o parágrafo em texto puro, sem markdown, sem aspas, sem prefixos.\" }] },\n  \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": \"Escreva a análise técnica diária para o ativo {{ $json.nome }}.\\n\\nDados do pregão:\\n- Abertura: {{ $json.openF }}\\n- Máxima: {{ $json.highF }}\\n- Mínima: {{ $json.lowF }}\\n- Fechamento: {{ $json.closeF }}\\n- Variação: {{ $json.pctF }}%\\n- Tempo Gráfico: {{ $json.timeframe }}\" }] }],\n  \"generationConfig\": { \"temperature\": 0.4, \"topP\": 0.9, \"maxOutputTokens\": 600 }\n}"
+      },
+      "id": "gemini-call",
+      "name": "Gemini · generateContent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta o HTML final usando o template e o texto gerado pelo Gemini\nconst gem = $input.first().json;\nconst d   = $('Parse OHLC').first().json;\nconst analiseTexto = (gem?.candidates?.[0]?.content?.parts?.[0]?.text || '').trim().replace(/^[\"']|[\"']$/g, '');\nconst publicadoEm = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n\nconst html = `<!DOCTYPE html>\n<html lang=\"pt-BR\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Análise Técnica — ${d.nome} | Genial Investimentos</title>\n<style>body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0b1220;color:#e6ebf5}.c{max-width:1200px;margin:0 auto;padding:32px 20px}.h{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:20px;margin-bottom:28px}.brand{color:#ffb800;font-weight:700;text-transform:uppercase;font-size:14px}.g{display:grid;grid-template-columns:1fr;gap:24px}@media(min-width:980px){.g{grid-template-columns:1.4fr 1fr}}.card{background:#131c30;border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}.ch{padding:16px 20px;background:#1a2540;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px;font-weight:600;color:#95a3bf;text-transform:uppercase;letter-spacing:.6px}.cb{padding:20px}.chart{height:560px;width:100%}.row{display:flex;flex-wrap:wrap;gap:18px 28px;margin-bottom:16px}.cell{display:flex;flex-direction:column}.lbl{font-size:11px;color:#95a3bf;text-transform:uppercase;letter-spacing:.6px}.val{font-size:18px;font-weight:600;margin-top:4px}.positive{color:#19c37d}.negative{color:#e35b5b}.an{font-size:15.5px;line-height:1.7}.disc{margin-top:28px;padding:14px 18px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,184,0,.05);font-size:12px;color:#95a3bf}.disc strong{color:#ffb800}</style>\n</head><body><div class=\"c\"><header class=\"h\"><div class=\"brand\">Genial Investimentos · Análise Técnica</div><div style=\"font-size:13px;color:#95a3bf\">Abra sua conta em <a href=\"https://www.genialinvestimentos.com.br/abra-sua-conta/\" style=\"color:#ffb800;text-decoration:none;font-weight:600\">genialinvestimentos.com.br</a></div></header>\n<h1 style=\"margin:0 0 6px\">${d.nome} — Análise Técnica Diária</h1><div style=\"color:#95a3bf;font-size:14px;margin-bottom:24px\">${d.timeframe} · ${publicadoEm}</div>\n<div class=\"g\"><section class=\"card\"><div class=\"ch\">Gráfico em tempo real · TradingView</div><div class=\"chart\"><div class=\"tradingview-widget-container\"><div id=\"tv_chart\"></div><script src=\"https://s3.tradingview.com/tv.js\"></script><script>new TradingView.widget({autosize:true,symbol:\"${d.tvSymbol}\",interval:\"${d.tvInterval}\",timezone:\"America/Sao_Paulo\",theme:\"dark\",style:\"1\",locale:\"br\",toolbar_bg:\"#131c30\",enable_publishing:false,hide_side_toolbar:false,allow_symbol_change:false,withdateranges:true,studies:[\"MASimple@tv-basicstudies\",\"RSI@tv-basicstudies\"],container_id:\"tv_chart\"});</script></div></div></section>\n<aside class=\"card\"><div class=\"ch\">Análise do Pregão</div><div class=\"cb\"><div class=\"row\"><div class=\"cell\"><span class=\"lbl\">Fechamento</span><span class=\"val\">${d.closeF}</span></div><div class=\"cell\"><span class=\"lbl\">Variação</span><span class=\"val ${d.changeClass}\">${d.pctF}%</span></div><div class=\"cell\"><span class=\"lbl\">Máx.</span><span class=\"val\">${d.highF}</span></div><div class=\"cell\"><span class=\"lbl\">Mín.</span><span class=\"val\">${d.lowF}</span></div></div>\n<p class=\"an\">${analiseTexto}</p></div></aside></div>\n<p class=\"disc\"><strong>Aviso CVM/CNPI:</strong> Conteúdo informativo e educacional, baseado em análise técnica probabilística. Não constitui recomendação de compra, venda ou manutenção de ativos. Investimentos em renda variável envolvem riscos.</p>\n</div></body></html>`;\n\nreturn [{ json: { ...d, analiseTexto, html, publicadoEm }, binary: { data: { data: Buffer.from(html).toString('base64'), mimeType: 'text/html', fileName: `${d.slug}.html` } } }];"
+      },
+      "id": "build-html",
+      "name": "Monta HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ '/data/analise/' + $json.slug + '.html' }}",
+        "options": {}
+      },
+      "id": "write-file",
+      "name": "Grava HTML local",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [1820, 220],
+      "notes": "Ajuste o caminho conforme o volume do seu n8n. Para Docker: use volume montado."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WORDPRESS_URL }}/wp-json/wp/v2/pages/{{ $json.key === 'IBOV' ? $env.WORDPRESS_PAGE_ID_IBOV : ($json.key === 'WIN' ? $env.WORDPRESS_PAGE_ID_WIN : $env.WORDPRESS_PAGE_ID_WDO) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"title\": \"Análise Técnica — {{ $json.nome }}\", \"content\": {{ JSON.stringify($json.html) }}, \"status\": \"publish\" }"
+      },
+      "id": "wp-publish",
+      "name": "WordPress · publica página",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 380],
+      "continueOnFail": true,
+      "notes": "Configure HTTP Basic Auth com WORDPRESS_USER e WORDPRESS_APP_PASSWORD. Remova este nó se for usar somente HTML estático."
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=*Análise Técnica publicada* — {{ $json.nome }}\nFechamento: {{ $json.closeF }} ({{ $json.pctF }}%)\nMáx: {{ $json.highF }} · Mín: {{ $json.lowF }}\n_{{ $json.publicadoEm }}_",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": true
+        }
+      },
+      "id": "telegram-notify",
+      "name": "Telegram · notifica",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2080, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram alancnpi_bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Diário 18:30 BRT (IBOV)": {
+      "main": [[{ "node": "Define Ativos", "type": "main", "index": 0 }]]
+    },
+    "Cron 15min (WIN/WDO)": {
+      "main": [[{ "node": "Define Ativos", "type": "main", "index": 0 }]]
+    },
+    "Define Ativos": {
+      "main": [[{ "node": "Yahoo Finance OHLC", "type": "main", "index": 0 }]]
+    },
+    "Yahoo Finance OHLC": {
+      "main": [[{ "node": "Parse OHLC", "type": "main", "index": 0 }]]
+    },
+    "Parse OHLC": {
+      "main": [[{ "node": "Gemini · generateContent", "type": "main", "index": 0 }]]
+    },
+    "Gemini · generateContent": {
+      "main": [[{ "node": "Monta HTML", "type": "main", "index": 0 }]]
+    },
+    "Monta HTML": {
+      "main": [[
+        { "node": "Grava HTML local", "type": "main", "index": 0 },
+        { "node": "WordPress · publica página", "type": "main", "index": 0 }
+      ]]
+    },
+    "WordPress · publica página": {
+      "main": [[{ "node": "Telegram · notifica", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "version": 1,
+  "pinData": {}
+}

@@ -1,0 +1,20 @@
+{
+  "name": "analise-tecnica-genial",
+  "version": "0.1.0",
+  "description": "Automação de análise técnica diária (IBOV, WIN, WDO) com Gemini + TradingView + publicação estática/WordPress",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "generate": "node src/generate.mjs",
+    "generate:ibov": "cross-env PUBLISH_ASSETS=IBOV node src/generate.mjs",
+    "generate:win": "cross-env PUBLISH_ASSETS=WIN node src/generate.mjs",
+    "generate:wdo": "cross-env PUBLISH_ASSETS=WDO node src/generate.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5"
+  }
+}

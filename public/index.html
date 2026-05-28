@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Análises Técnicas — Genial Investimentos</title>
+  <meta name="description" content="Análises técnicas diárias automatizadas: Ibovespa, Mini Índice (WIN) e Mini Dólar (WDO)." />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --surface: #131c30;
+      --text: #e6ebf5;
+      --muted: #95a3bf;
+      --accent: #ffb800;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+    .container { max-width: 960px; margin: 0 auto; padding: 48px 20px 80px; }
+    .brand { color: var(--accent); font-weight: 700; letter-spacing: 0.6px; font-size: 13px; text-transform: uppercase; margin-bottom: 12px; }
+    h1 { margin: 0 0 12px; font-size: clamp(26px, 3vw, 38px); letter-spacing: -0.4px; }
+    .lead { color: var(--muted); font-size: 16px; max-width: 640px; margin-bottom: 40px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+    @media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; transition: transform 0.15s ease, border-color 0.15s ease; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; }
+    .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .card-tag { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+    .card-title { font-size: 18px; font-weight: 600; }
+    .card-desc { font-size: 13px; color: var(--muted); }
+    .bot-card { margin-top: 40px; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255, 184, 0, 0.05); }
+    .bot-card h2 { margin: 0 0 8px; font-size: 18px; color: var(--accent); }
+    .bot-card p { margin: 0; color: var(--muted); font-size: 14px; }
+    .bot-card code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: var(--text); }
+    footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">Genial Investimentos · Análise Técnica</div>
+    <h1>Análises técnicas diárias automatizadas</h1>
+    <p class="lead">Acompanhe a leitura técnica probabilística dos três principais ativos da B3, atualizada após cada pregão (IBOV) e a cada 15 minutos no intraday (WIN/WDO).</p>
+
+    <div class="grid">
+      <a class="card" href="./ibovespa.html">
+        <span class="card-tag">Gráfico Diário</span>
+        <span class="card-title">Ibovespa (IBOV)</span>
+        <span class="card-desc">Análise diária após o fechamento do mercado à vista.</span>
+      </a>
+      <a class="card" href="./mini-indice.html">
+        <span class="card-tag">Intraday M15</span>
+        <span class="card-title">Mini Índice (WIN)</span>
+        <span class="card-desc">Atualizada a cada 15 minutos durante o pregão.</span>
+      </a>
+      <a class="card" href="./mini-dolar.html">
+        <span class="card-tag">Intraday M15</span>
+        <span class="card-title">Mini Dólar (WDO)</span>
+        <span class="card-desc">Atualizada a cada 15 minutos durante o pregão.</span>
+      </a>
+    </div>
+
+    <div class="bot-card">
+      <h2>📲 Receba análises sob demanda no Telegram</h2>
+      <p>Fale com <code>@alancnpi_bot</code> e use <code>/ibov</code>, <code>/win</code> ou <code>/wdo</code> para gerar a análise técnica do ativo no momento exato em que você precisar.</p>
+    </div>
+
+    <footer>
+      <strong>Aviso CVM/CNPI:</strong> Conteúdo informativo e educacional. Análise técnica probabilística do gráfico de preços. Não constitui recomendação de compra, venda ou manutenção. Investimentos em renda variável envolvem riscos. © Genial Investimentos.
+    </footer>
+  </div>
+</body>
+</html>

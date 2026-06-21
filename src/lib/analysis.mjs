@@ -1,23 +1,94 @@
 // Lógica compartilhada entre o cron (src/generate.mjs) e o bot (api/telegram.js).
 // Compatível com Node 20+ e com o runtime Edge da Vercel — usa apenas fetch e string ops.
 
-import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from "./prompts.mjs";
+import {
+  SYSTEM_PROMPT,
+  USER_PROMPT_TEMPLATE,
+  AUDIO_SYSTEM_PROMPT,
+  AUDIO_USER_PROMPT_TEMPLATE,
+} from "./prompts.mjs";
 
-// Lê cache RTD gerado pelo profit-bridge.ps1 (apenas em ambiente Node, não no Edge)
-async function readRtdCache(assetKey) {
+function rtdAssetKeyFromName(nome) {
+  const n = String(nome || "").toUpperCase();
+  if (n === "IBOV") return "IBOV";
+  if (n.startsWith("WIN")) return "WIN";
+  if (n.startsWith("WDO")) return "WDO";
+  return null;
+}
+
+// Lê os dados RTD direto da instância do Excel aberta (COM, só Windows), sem precisar
+// salvar o arquivo — evita o delay entre "RTD atualiza a célula" e "alguém salva o .xlsx".
+// Resultado é cacheado em memória por processo (1 chamada de PowerShell cobre os 3 ativos).
+let liveRtdCache = null;
+async function readRtdLive(assetKey) {
+  if (process.platform !== "win32") return null;
   try {
-    const { readFile } = await import("node:fs/promises");
+    if (!liveRtdCache) {
+      const { execFileSync } = await import("node:child_process");
+      const { resolve, dirname } = await import("node:path");
+      const { fileURLToPath } = await import("node:url");
+      const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+      const scriptPath = resolve(root, "scripts/read-rtd-live.ps1");
+      const stdout = execFileSync(
+        "powershell.exe",
+        ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", scriptPath],
+        { encoding: "utf8", timeout: 15000 }
+      );
+      liveRtdCache = JSON.parse(stdout);
+    }
+    return liveRtdCache[assetKey] ?? null;
+  } catch {
+    liveRtdCache = liveRtdCache || false; // evita tentar de novo nas próximas chamadas do mesmo processo
+    return null;
+  }
+}
+
+// Lê os dados RTD direto da planilha rtd.xlsx salva em disco (fallback quando o Excel
+// não está aberto ou não está acessível via COM — ex: ambiente não-Windows).
+// Colunas da planilha: A=Asset, B=Data, C=Hora, D=Último(close), E=Abertura(open),
+// F=Máximo(high), G=Mínimo(low), H=Fechamento Anterior(prev_close), I=Variação%(var_pct),
+// AA=IFR(RSI), AC=Volatilidade Histórica Média.
+async function readRtdFromFile(assetKey) {
+  try {
+    const XLSX = (await import("xlsx")).default;
     const { resolve, dirname } = await import("node:path");
     const { fileURLToPath } = await import("node:url");
+    const { stat } = await import("node:fs/promises");
     const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-    const raw = await readFile(resolve(root, "data/rtd-cache.json"), "utf8");
-    const cache = JSON.parse(raw.replace(/^﻿/, ""));
-    const entry = cache[assetKey];
-    if (!entry) return null;
-    // Rejeita cache com mais de 20 minutos
-    const age = Date.now() - new Date(entry.ts).getTime();
+    const xlsxPath = resolve(root, "rtd.xlsx");
+
+    // Rejeita planilha não atualizada há mais de 20 minutos
+    const info = await stat(xlsxPath);
+    const age = Date.now() - info.mtime.getTime();
     if (age > 20 * 60 * 1000) return null;
-    return entry;
+
+    const wb = XLSX.readFile(xlsxPath);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+
+    for (const row of rows.slice(1)) {
+      const key = rtdAssetKeyFromName(row[0]);
+      if (key !== assetKey) continue;
+      const [close, open, high, low, prevClose, varPct] = [row[3], row[4], row[5], row[6], row[7], row[8]];
+      if (!close || !open || !high || !low) continue;
+      const rsi = typeof row[26] === "number" && row[26] >= 0 && row[26] <= 100 ? row[26] : null;
+      const histVol = typeof row[28] === "number" ? row[28] : null;
+      return {
+        close,
+        open,
+        high,
+        low,
+        prev_close: prevClose ?? null,
+        var_pct: varPct ?? null,
+        volume: row[11] ?? null,
+        rsi,
+        hist_vol: histVol,
+        date: row[1] ?? null,
+        time: row[2] ?? null,
+        ts: info.mtime.toISOString(),
+      };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -27,9 +98,6 @@ export const ASSETS = {
   IBOV: {
     key: "IBOV",
     nome: "Ibovespa (IBOV)",
-    yahoo: "^BVSP",
-    yahooInterval: "1d",
-    yahooRange: "5d",
     timeframe: "Gráfico Diário (1D)",
     tvSymbol: "BMFBOVESPA:IBOV",
     tvInterval: "D",
@@ -39,10 +107,6 @@ export const ASSETS = {
   WIN: {
     key: "WIN",
     nome: "Mini Índice (WIN)",
-    yahoo: "^BVSP",
-    yahooInterval: "15m",
-    yahooRange: "1d",
-    lastCandleOnly: true,
     timeframe: "Gráfico Intraday de 15 minutos (M15)",
     tvSymbol: "BMFBOVESPA:WIN1!",
     tvInterval: "15",
@@ -52,11 +116,6 @@ export const ASSETS = {
   WDO: {
     key: "WDO",
     nome: "Mini Dólar Futuro (WDO)",
-    yahoo: "BRL=X",
-    yahooInterval: "15m",
-    yahooRange: "1d",
-    lastCandleOnly: true,
-    yahooScale: 1000,
     timeframe: "Gráfico Intraday de 15 minutos (M15)",
     tvSymbol: "BMFBOVESPA:WDO1!",
     tvInterval: "15",
@@ -84,74 +143,6 @@ export function formatNumber(value, decimals) {
   });
 }
 
-export async function fetchYahooOHLC(symbol, interval, range, { lastCandleOnly = false } = {}) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${range}`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; AnaliseTecnicaBot/1.0)",
-      Accept: "application/json",
-    },
-  });
-  if (!res.ok) throw new Error(`Yahoo Finance ${symbol} HTTP ${res.status}`);
-  const data = await res.json();
-  const result = data?.chart?.result?.[0];
-  if (!result) throw new Error(`Yahoo Finance ${symbol}: resposta vazia`);
-
-  const meta = result.meta;
-  const q = result.indicators?.quote?.[0] || {};
-  const rawOpens  = q.open  || [];
-  const rawHighs  = q.high  || [];
-  const rawLows   = q.low   || [];
-  const rawCloses = q.close || [];
-
-  // índices não-nulos
-  const validIdx = rawCloses
-    .map((v, i) => (v != null ? i : null))
-    .filter((i) => i !== null);
-
-  if (validIdx.length === 0) throw new Error(`Yahoo Finance ${symbol}: série OHLC vazia`);
-
-  let open, high, low, close, prevClose;
-
-  if (lastCandleOnly && validIdx.length >= 2) {
-    // Último candle completo: prevClose = penúltimo fechamento
-    const last = validIdx[validIdx.length - 1];
-    const prev = validIdx[validIdx.length - 2];
-    open  = rawOpens[last]  ?? rawCloses[last];
-    high  = rawHighs[last]  ?? rawCloses[last];
-    low   = rawLows[last]   ?? rawCloses[last];
-    close = rawCloses[last];
-    prevClose = rawCloses[prev];
-  } else {
-    // Sessão completa: agrega todos os candles (filter(Boolean) removeria 0, usar != null)
-    const opens  = validIdx.map((i) => rawOpens[i]).filter(v => v != null);
-    const highs  = validIdx.map((i) => rawHighs[i]).filter(v => v != null);
-    const lows   = validIdx.map((i) => rawLows[i]).filter(v => v != null);
-    const closes = validIdx.map((i) => rawCloses[i]);
-    open  = opens[0];
-    high  = highs.length ? Math.max(...highs) : null;
-    low   = lows.length  ? Math.min(...lows)  : null;
-    close = closes[closes.length - 1];
-    prevClose =
-      meta.chartPreviousClose ??
-      meta.previousClose ??
-      meta.regularMarketPreviousClose ??
-      null;
-  }
-
-  const percent_change = prevClose ? ((close - prevClose) / prevClose) * 100 : 0;
-
-  return {
-    open,
-    high,
-    low,
-    close,
-    percent_change,
-    prevClose,
-    currency: meta.currency,
-    asOf: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date(),
-  };
-}
 
 async function callGroq({ apiKey, model, systemPrompt, userPrompt }) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -223,58 +214,98 @@ export function renderTemplate(template, vars) {
   );
 }
 
+// Resolve provider/model a partir de opts e variáveis de ambiente.
+function resolveLLMConfig(opts) {
+  const groqKey   = opts.groqKey   || globalThis.process?.env?.GROQ_API_KEY;
+  const geminiKey = opts.geminiKey || globalThis.process?.env?.GEMINI_API_KEY;
+  const provider  = groqKey ? "groq" : "gemini";
+  const apiKey    = groqKey || geminiKey;
+  if (!apiKey) throw new Error("Configure GROQ_API_KEY ou GEMINI_API_KEY");
+  const defaultModel = provider === "groq" ? "llama-3.3-70b-versatile" : "gemini-2.0-flash";
+  const model = opts.model || globalThis.process?.env?.LLM_MODEL ||
+    (provider === "gemini" ? globalThis.process?.env?.GEMINI_MODEL : null) || defaultModel;
+  return { provider, apiKey, model };
+}
+
+// Monta OHLC diário a partir do cache RTD do Profit.
+function ohlcFromRtd(rtd) {
+  const prevClose = rtd.prev_close ?? null;
+  // Variação do dia = coluna I (Variação%, já calculada pelo Profit como D vs H).
+  // Se vier nula, calcula a partir de Fechamento Anterior (H) vs Último (D).
+  const percent_change = rtd.var_pct != null
+    ? rtd.var_pct
+    : (prevClose && prevClose !== 0 ? ((rtd.close - prevClose) / prevClose) * 100 : 0);
+  return {
+    open: rtd.open,
+    high: rtd.high,
+    low: rtd.low,
+    close: rtd.close,
+    prevClose,
+    percent_change,
+    rsi: rtd.rsi ?? null,
+    hist_vol: rtd.hist_vol ?? null,
+    volume: rtd.volume ?? null,
+    currency: "BRL",
+    asOf: new Date(rtd.ts),
+  };
+}
+
+/**
+ * Busca os dados do ativo exclusivamente via RTD: primeiro tenta ler ao vivo da
+ * instância do Excel aberta (COM, sem precisar salvar); se não houver Excel aberto
+ * com o RTD, cai para o último rtd.xlsx salvo em disco. Nenhuma API externa é consultada.
+ */
+async function fetchOhlcForAsset(asset) {
+  const liveRtd = await readRtdLive(asset.key);
+  if (liveRtd) return { ohlcDay: ohlcFromRtd(liveRtd), ohlc15m: null };
+
+  const fileRtd = await readRtdFromFile(asset.key);
+  if (fileRtd) return { ohlcDay: ohlcFromRtd(fileRtd), ohlc15m: null };
+
+  throw new Error(
+    `RTD: dados de ${asset.key} ausentes. Verifique se o Excel está aberto com rtd.xlsx e o RTD do Profit conectado (ou se há um rtd.xlsx salvo nos últimos 20 min).`
+  );
+}
+
 /**
  * Orquestra o pipeline completo de análise de UM ativo.
  * @param {string} assetKey  — IBOV, WIN ou WDO
- * @param {object} opts      — { geminiKey?, geminiModel?, systemPrompt?, userPromptTpl? }
- * @returns {Promise<{ asset, ohlc, analiseTexto, userPrompt }>}
+ * @param {object} opts      — { groqKey?, geminiKey?, model?, systemPrompt?, userPromptTpl? }
+ * @returns {Promise<{ asset, ohlc, ohlc15m, analiseTexto, userPrompt }>}
+ *   ohlc = dados diários (use para display na página)
+ *   ohlc15m = último candle de 15m (contexto intraday, pode ser null para IBOV)
  */
 export async function buildAnalysis(assetKey, opts = {}) {
   const asset = ASSETS[assetKey];
   if (!asset) throw new Error(`Ativo desconhecido: ${assetKey}`);
 
-  const groqKey = opts.groqKey || globalThis.process?.env?.GROQ_API_KEY;
-  const geminiKey = opts.geminiKey || globalThis.process?.env?.GEMINI_API_KEY;
-  const provider = groqKey ? "groq" : "gemini";
-  const apiKey = groqKey || geminiKey;
-  if (!apiKey) throw new Error("Configure GROQ_API_KEY ou GEMINI_API_KEY");
-  const defaultModel = provider === "groq" ? "llama-3.3-70b-versatile" : "gemini-2.0-flash";
-  const model = opts.model || globalThis.process?.env?.LLM_MODEL ||
-    (provider === "gemini" ? globalThis.process?.env?.GEMINI_MODEL : null) || defaultModel;
-
-  // Tenta usar dados ao vivo do Profit (RTD) para WIN e WDO
-  let ohlc;
-  const rtd = asset.key !== "IBOV" ? await readRtdCache(asset.key) : null;
-  if (rtd) {
-    // Usa prevClose e variação diretamente do Profit — sem Yahoo Finance
-    const prevClose = rtd.prev_close ?? null;
-    const percent_change = rtd.var_pct != null
-      ? rtd.var_pct
-      : (prevClose ? ((rtd.close - prevClose) / prevClose) * 100 : 0);
-    ohlc = { open: rtd.open, high: rtd.high, low: rtd.low, close: rtd.close,
-              prevClose, percent_change, rsi: rtd.rsi, hist_vol: rtd.hist_vol,
-              volume: rtd.volume, currency: "BRL", asOf: new Date(rtd.ts) };
-  } else {
-    ohlc = await fetchYahooOHLC(
-      asset.yahoo, asset.yahooInterval, asset.yahooRange,
-      { lastCandleOnly: asset.lastCandleOnly ?? false }
-    );
-  }
+  const { provider, apiKey, model } = resolveLLMConfig(opts);
+  const { ohlcDay, ohlc15m } = await fetchOhlcForAsset(asset);
 
   const extraIndicadores = [
-    ohlc.rsi != null ? `- IFR (RSI-14): ${ohlc.rsi.toFixed(1)}` : null,
-    ohlc.hist_vol != null ? `- Volatilidade Histórica Média: ${ohlc.hist_vol.toFixed(2)}%` : null,
+    ohlcDay.rsi     != null ? `- IFR (RSI-14): ${ohlcDay.rsi.toFixed(1)}`            : null,
+    ohlcDay.hist_vol != null ? `- Volatilidade Histórica Média: ${ohlcDay.hist_vol.toFixed(2)}%` : null,
   ].filter(Boolean).join("\n");
+
+  // Para WIN/WDO, inclui dados do último candle de 15m como contexto adicional
+  const extra15m = (ohlc15m && asset.key !== "IBOV")
+    ? `\n\nÚltimo Candle de 15 Minutos (contexto intraday):
+- Abertura (15m): ${formatNumber(ohlc15m.open)}
+- Máxima (15m): ${formatNumber(ohlc15m.high)}
+- Mínima (15m): ${formatNumber(ohlc15m.low)}
+- Fechamento (15m): ${formatNumber(ohlc15m.close)}`
+    : "";
 
   const userPrompt = renderTemplate(opts.userPromptTpl || USER_PROMPT_TEMPLATE, {
     ativo: asset.nome,
-    open: formatNumber(ohlc.open),
-    high: formatNumber(ohlc.high),
-    low: formatNumber(ohlc.low),
-    close: formatNumber(ohlc.close),
-    percent_change: ohlc.percent_change.toFixed(2),
+    open: formatNumber(ohlcDay.open),
+    high: formatNumber(ohlcDay.high),
+    low: formatNumber(ohlcDay.low),
+    close: formatNumber(ohlcDay.close),
+    percent_change: ohlcDay.percent_change.toFixed(2),
     timeframe: asset.timeframe,
     extraIndicadores: extraIndicadores ? `\n${extraIndicadores}` : "",
+    extra15m,
   });
 
   const analiseTexto = await callLLM({
@@ -285,5 +316,49 @@ export async function buildAnalysis(assetKey, opts = {}) {
     userPrompt,
   });
 
-  return { asset, ohlc, analiseTexto, userPrompt };
+  return { asset, ohlc: ohlcDay, ohlc15m, analiseTexto, userPrompt };
+}
+
+/**
+ * Variante de buildAnalysis que usa a transcrição de áudio do analista como
+ * guia principal da narrativa. Os dados quantitativos do RTD preenchem os números exatos.
+ *
+ * @param {string} assetKey     — IBOV, WIN ou WDO
+ * @param {string} transcricao  — texto transcrito do áudio do analista
+ * @param {object} opts         — mesmas opções de buildAnalysis
+ */
+export async function buildAnalysisWithAudio(assetKey, transcricao, opts = {}) {
+  const asset = ASSETS[assetKey];
+  if (!asset) throw new Error(`Ativo desconhecido: ${assetKey}`);
+  if (!transcricao || !transcricao.trim()) throw new Error("Transcrição de áudio vazia");
+
+  const { provider, apiKey, model } = resolveLLMConfig(opts);
+  const { ohlcDay } = await fetchOhlcForAsset(asset);
+
+  const extraIndicadores = [
+    ohlcDay.rsi     != null ? `- IFR (RSI-14): ${ohlcDay.rsi.toFixed(1)}`            : null,
+    ohlcDay.hist_vol != null ? `- Volatilidade Histórica Média: ${ohlcDay.hist_vol.toFixed(2)}%` : null,
+  ].filter(Boolean).join("\n");
+
+  const userPrompt = renderTemplate(opts.userPromptTpl || AUDIO_USER_PROMPT_TEMPLATE, {
+    ativo: asset.nome,
+    transcricao: transcricao.trim(),
+    open: formatNumber(ohlcDay.open),
+    high: formatNumber(ohlcDay.high),
+    low: formatNumber(ohlcDay.low),
+    close: formatNumber(ohlcDay.close),
+    percent_change: ohlcDay.percent_change.toFixed(2),
+    timeframe: asset.timeframe,
+    extraIndicadores: extraIndicadores ? `\n${extraIndicadores}` : "",
+  });
+
+  const analiseTexto = await callLLM({
+    provider,
+    apiKey,
+    model,
+    systemPrompt: opts.systemPrompt || AUDIO_SYSTEM_PROMPT,
+    userPrompt,
+  });
+
+  return { asset, ohlc: ohlcDay, analiseTexto, userPrompt, transcricao };
 }

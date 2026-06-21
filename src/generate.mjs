@@ -78,6 +78,26 @@ async function processAsset(assetKey, pageTpl) {
     timeStyle: "short",
   });
 
+  const periodos = [
+    { label: "Semana", value: ohlc.var_semana },
+    { label: "Mês", value: ohlc.var_mes },
+    { label: "Trimestre", value: ohlc.var_tri },
+    { label: "Semestre", value: ohlc.var_sem },
+    { label: "12 Meses", value: ohlc.var_12m },
+    { label: "Ano (YTD)", value: ohlc.var_ano },
+  ].filter((p) => p.value != null);
+
+  const quantPanelHtml = periodos.length
+    ? periodos
+        .map(
+          (p) => `<div class="quant-cell">
+              <span class="quant-label">${p.label}</span>
+              <span class="quant-value ${p.value >= 0 ? "positive" : "negative"}">${p.value >= 0 ? "+" : ""}${p.value.toFixed(2)}%</span>
+            </div>`
+        )
+        .join("\n")
+    : "";
+
   const html = renderTemplate(pageTpl, {
     ativo: asset.nome,
     timeframe: asset.timeframe,
@@ -89,6 +109,7 @@ async function processAsset(assetKey, pageTpl) {
     close: formatNumber(ohlc.close),
     percent_change: ohlc.percent_change.toFixed(2),
     changeClass: ohlc.percent_change >= 0 ? "positive" : "negative",
+    quantPanelHtml,
     analiseTexto,
     textoOg: analiseTexto.slice(0, 180).replace(/"/g, "'") + "…",
     publicadoEm: publishedAt,

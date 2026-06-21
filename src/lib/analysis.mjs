@@ -47,7 +47,18 @@ async function readRtdLive(assetKey) {
 // não está aberto ou não está acessível via COM — ex: ambiente não-Windows).
 // Colunas da planilha: A=Asset, B=Data, C=Hora, D=Último(close), E=Abertura(open),
 // F=Máximo(high), G=Mínimo(low), H=Fechamento Anterior(prev_close), I=Variação%(var_pct),
+// P=Semana, Q=Mês, R=3 meses, S=6 meses, T=12 meses, U=Ano, V=Trimestre, W=Semestre,
 // AA=IFR(RSI), AC=Volatilidade Histórica Média.
+//
+// Contratos futuros (WINQ26, WDON26 etc.) rolam a cada poucos meses, então as colunas
+// de retorno em prazos longos (6m/12m/Trimestre/Semestre/Ano) ficam truncadas ou
+// duplicadas para eles. Os contratos perpétuos (WINFUT, WDOFUT) têm série contínua e
+// fornecem esses retornos de forma confiável — usamos o contrato corrente para
+// preço/OHLC do dia e o perpétuo só para os retornos de prazo mais longo.
+function isPerpetuo(nome) {
+  return /FUT$/i.test(String(nome || "").trim());
+}
+
 async function readRtdFromFile(assetKey) {
   try {
     const XLSX = (await import("xlsx")).default;
@@ -65,15 +76,37 @@ async function readRtdFromFile(assetKey) {
     const wb = XLSX.readFile(xlsxPath);
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
+    const numOrNull = (v) => (typeof v === "number" ? v : null);
+
+    let front = null;
+    let perp = null;
 
     for (const row of rows.slice(1)) {
       const key = rtdAssetKeyFromName(row[0]);
       if (key !== assetKey) continue;
+
+      const periodos = {
+        var_semana: numOrNull(row[15]),
+        var_mes: numOrNull(row[16]),
+        var_3m: numOrNull(row[17]),
+        var_6m: numOrNull(row[18]),
+        var_12m: numOrNull(row[19]),
+        var_ano: numOrNull(row[20]),
+        var_tri: numOrNull(row[21]),
+        var_sem: numOrNull(row[22]),
+      };
+
+      if (isPerpetuo(row[0])) {
+        if (!perp) perp = periodos;
+        continue;
+      }
+
+      if (front) continue; // já temos o contrato corrente, ignora linhas extras
       const [close, open, high, low, prevClose, varPct] = [row[3], row[4], row[5], row[6], row[7], row[8]];
       if (!close || !open || !high || !low) continue;
       const rsi = typeof row[26] === "number" && row[26] >= 0 && row[26] <= 100 ? row[26] : null;
       const histVol = typeof row[28] === "number" ? row[28] : null;
-      return {
+      front = {
         close,
         open,
         high,
@@ -81,6 +114,7 @@ async function readRtdFromFile(assetKey) {
         prev_close: prevClose ?? null,
         var_pct: varPct ?? null,
         volume: row[11] ?? null,
+        ...periodos,
         rsi,
         hist_vol: histVol,
         date: row[1] ?? null,
@@ -88,7 +122,10 @@ async function readRtdFromFile(assetKey) {
         ts: info.mtime.toISOString(),
       };
     }
-    return null;
+
+    if (!front) return null;
+    if (perp) Object.assign(front, perp);
+    return front;
   } catch {
     return null;
   }
@@ -245,9 +282,35 @@ function ohlcFromRtd(rtd) {
     rsi: rtd.rsi ?? null,
     hist_vol: rtd.hist_vol ?? null,
     volume: rtd.volume ?? null,
+    var_semana: rtd.var_semana ?? null,
+    var_mes: rtd.var_mes ?? null,
+    var_3m: rtd.var_3m ?? null,
+    var_6m: rtd.var_6m ?? null,
+    var_12m: rtd.var_12m ?? null,
+    var_ano: rtd.var_ano ?? null,
+    var_tri: rtd.var_tri ?? null,
+    var_sem: rtd.var_sem ?? null,
     currency: "BRL",
     asOf: new Date(rtd.ts),
   };
+}
+
+// Monta o bloco de retornos em múltiplos prazos (semana, mês, trimestre, semestre,
+// 12 meses, ano) para dar ao LLM contexto de longo prazo além do candle do dia.
+function buildMultiPrazoBlock(ohlcDay) {
+  const fmtPct = (v) => (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+  const linhas = [
+    ohlcDay.var_semana != null ? `- Variação na Semana: ${fmtPct(ohlcDay.var_semana)}` : null,
+    ohlcDay.var_mes    != null ? `- Variação no Mês: ${fmtPct(ohlcDay.var_mes)}` : null,
+    ohlcDay.var_tri    != null ? `- Variação no Trimestre: ${fmtPct(ohlcDay.var_tri)}` : null,
+    ohlcDay.var_3m     != null ? `- Variação em 3 Meses: ${fmtPct(ohlcDay.var_3m)}` : null,
+    ohlcDay.var_sem    != null ? `- Variação no Semestre: ${fmtPct(ohlcDay.var_sem)}` : null,
+    ohlcDay.var_6m     != null ? `- Variação em 6 Meses: ${fmtPct(ohlcDay.var_6m)}` : null,
+    ohlcDay.var_12m    != null ? `- Variação em 12 Meses: ${fmtPct(ohlcDay.var_12m)}` : null,
+    ohlcDay.var_ano    != null ? `- Variação no Ano (YTD): ${fmtPct(ohlcDay.var_ano)}` : null,
+  ].filter(Boolean);
+  if (!linhas.length) return "";
+  return `\nPerformance em Múltiplos Prazos (use para contextualizar o pregão dentro da tendência maior — ex.: se a variação no dia segue na mesma direção da variação semanal/mensal negativa, isso reforça a leitura de proximidade de mínimas recentes; se o dia reage contra uma queda mensal/trimestral forte, isso sugere possível exaustão ou pivô):\n${linhas.join("\n")}`;
 }
 
 /**
@@ -287,6 +350,8 @@ export async function buildAnalysis(assetKey, opts = {}) {
     ohlcDay.hist_vol != null ? `- Volatilidade Histórica Média: ${ohlcDay.hist_vol.toFixed(2)}%` : null,
   ].filter(Boolean).join("\n");
 
+  const multiPrazo = buildMultiPrazoBlock(ohlcDay);
+
   // Para WIN/WDO, inclui dados do último candle de 15m como contexto adicional
   const extra15m = (ohlc15m && asset.key !== "IBOV")
     ? `\n\nÚltimo Candle de 15 Minutos (contexto intraday):
@@ -306,6 +371,7 @@ export async function buildAnalysis(assetKey, opts = {}) {
     timeframe: asset.timeframe,
     extraIndicadores: extraIndicadores ? `\n${extraIndicadores}` : "",
     extra15m,
+    multiPrazo: multiPrazo ? `\n${multiPrazo}` : "",
   });
 
   const analiseTexto = await callLLM({
@@ -340,6 +406,8 @@ export async function buildAnalysisWithAudio(assetKey, transcricao, opts = {}) {
     ohlcDay.hist_vol != null ? `- Volatilidade Histórica Média: ${ohlcDay.hist_vol.toFixed(2)}%` : null,
   ].filter(Boolean).join("\n");
 
+  const multiPrazo = buildMultiPrazoBlock(ohlcDay);
+
   const userPrompt = renderTemplate(opts.userPromptTpl || AUDIO_USER_PROMPT_TEMPLATE, {
     ativo: asset.nome,
     transcricao: transcricao.trim(),
@@ -350,6 +418,7 @@ export async function buildAnalysisWithAudio(assetKey, transcricao, opts = {}) {
     percent_change: ohlcDay.percent_change.toFixed(2),
     timeframe: asset.timeframe,
     extraIndicadores: extraIndicadores ? `\n${extraIndicadores}` : "",
+    multiPrazo: multiPrazo ? `\n${multiPrazo}` : "",
   });
 
   const analiseTexto = await callLLM({

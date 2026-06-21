@@ -77,6 +77,21 @@
     }
     .meta span { display: inline-flex; align-items: center; gap: 6px; }
     .meta strong { color: var(--text); font-weight: 600; }
+    .quant-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .quant-cell { display: flex; flex-direction: column; align-items: flex-start; }
+    .quant-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .quant-value { font-size: 15px; font-weight: 700; margin-top: 3px; }
+    .quant-value.positive { color: var(--positive); }
+    .quant-value.negative { color: var(--negative); }
     .disclaimer {
       margin-top: 28px;
       padding: 14px 18px;
@@ -164,6 +179,10 @@
               <span class="quote-label">Mín.</span>
               <span class="quote-value">{{low}}</span>
             </div>
+          </div>
+
+          <div class="quant-panel" aria-label="Performance em múltiplos prazos">
+{{quantPanelHtml}}
           </div>
 
           <p class="analise-tecnica">{{analiseTexto}}</p>

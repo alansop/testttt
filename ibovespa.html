@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Ibovespa (IBOV) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Ibovespa (IBOV) | Genial Investimentos" />
-  <meta property="og:description" content="O Ibovespa apresentou um comportamento de consolidação no último pregão, com uma variação percentual de 0,03%, indicando uma certa estabilidade nos preços. Os valores exatos de sup…" />
+  <meta property="og:description" content="O Ibovespa apresentou uma consolidação no último pregão, com uma variação percentual de 0,03% e um fechamento em 168.334. Considerando a performance em prazos mais longos, o movime…" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Ibovespa (IBOV) | Genial Investimentos</title>
@@ -77,6 +77,21 @@
     }
     .meta span { display: inline-flex; align-items: center; gap: 6px; }
     .meta strong { color: var(--text); font-weight: 600; }
+    .quant-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .quant-cell { display: flex; flex-direction: column; align-items: flex-start; }
+    .quant-label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .quant-value { font-size: 15px; font-weight: 700; margin-top: 3px; }
+    .quant-value.positive { color: var(--positive); }
+    .quant-value.negative { color: var(--negative); }
     .disclaimer {
       margin-top: 28px;
       padding: 14px 18px;
@@ -107,7 +122,7 @@
     </header>
 
     <h1>Ibovespa (IBOV) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Diário (1D) · Atualizado em 21/06/2026, 00:42</div>
+    <div class="subtitle">Gráfico Diário (1D) · Atualizado em 21/06/2026, 01:53</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -166,12 +181,39 @@
             </div>
           </div>
 
-          <p class="analise-tecnica">O Ibovespa apresentou um comportamento de consolidação no último pregão, com uma variação percentual de 0,03%, indicando uma certa estabilidade nos preços. Os valores exatos de suporte e resistência mais próximos são 167.658 e 168.787, respectivamente, derivados das mínimas e máximas diárias. A manutenção acima do suporte de 167.658 tende a fortalecer o viés de alta, enquanto a perda deste nível pode abrir espaço para uma movimentação descendente. O fechamento em 168.334 sugere que o ativo está se mantendo em uma faixa de consolidação. O próximo pregão pode ser influenciado pela capacidade do Ibovespa de manter ou romper esses níveis técnicos, com o viés direcional probabilístico para o próximo pregão sendo de alta se o ativo conseguir manter-se acima do suporte de 167.658.</p>
+          <div class="quant-panel" aria-label="Performance em múltiplos prazos">
+<div class="quant-cell">
+              <span class="quant-label">Semana</span>
+              <span class="quant-value negative">-1.64%</span>
+            </div>
+<div class="quant-cell">
+              <span class="quant-label">Mês</span>
+              <span class="quant-value negative">-3.14%</span>
+            </div>
+<div class="quant-cell">
+              <span class="quant-label">Trimestre</span>
+              <span class="quant-value negative">-10.20%</span>
+            </div>
+<div class="quant-cell">
+              <span class="quant-label">Semestre</span>
+              <span class="quant-value positive">+4.47%</span>
+            </div>
+<div class="quant-cell">
+              <span class="quant-label">12 Meses</span>
+              <span class="quant-value positive">+21.35%</span>
+            </div>
+<div class="quant-cell">
+              <span class="quant-label">Ano (YTD)</span>
+              <span class="quant-value positive">+4.47%</span>
+            </div>
+          </div>
+
+          <p class="analise-tecnica">O Ibovespa apresentou uma consolidação no último pregão, com uma variação percentual de 0,03% e um fechamento em 168.334. Considerando a performance em prazos mais longos, o movimento do dia segue a tendência semanal e mensal negativa, com variações de -1,64% e -3,14%, respectivamente, o que sugere que o ativo se aproxima de mínimas recentes relevantes. A resistência mais próxima está em 168.787, enquanto o suporte mais próximo está em 167.658. A manutenção acima do suporte tende a fortalecer o viés de lateralização, enquanto a perda do suporte pode abrir espaço para uma continuação da tendência baixista. O viés esperado para o próximo pregão é de lateralização, com a região de preço entre 167.658 e 168.787 sendo crucial para confirmar ou invalidar o cenário. A quebra da resistência ou do suporte pode influenciar o direcionamento do ativo nos próximos pregões.</p>
 
           <div class="meta">
             <span>Abertura: <strong>168.279</strong></span>
             <span>Timeframe: <strong>Gráfico Diário (1D)</strong></span>
-            <span>Última coleta: <strong>21/06/2026, 00:42</strong></span>
+            <span>Última coleta: <strong>21/06/2026, 01:53</strong></span>
           </div>
         </div>
       </aside>

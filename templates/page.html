@@ -69,6 +69,69 @@
       font-size: 15.5px; line-height: 1.7; color: var(--text);
       margin: 0;
     }
+    .analise-versao { margin-bottom: 18px; }
+    .analise-versao:last-child { margin-bottom: 0; }
+    .analise-versao-label {
+      display: inline-block; margin-bottom: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .analise-tecnica strong { color: var(--text); font-weight: 700; }
+    .quote-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .quote-section-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .quote-value-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .analise-versao-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 8px;
+    }
+    .copy-btn {
+      cursor: pointer;
+      font: inherit; font-size: 11px; font-weight: 600;
+      line-height: 1; white-space: nowrap;
+      color: var(--accent); background: rgba(255, 184, 0, 0.08);
+      border: 1px solid rgba(255, 184, 0, 0.25); border-radius: 6px;
+      padding: 4px 8px; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { background: rgba(255, 184, 0, 0.16); }
+    .copy-btn.copied {
+      color: var(--positive);
+      border-color: rgba(25, 195, 125, 0.4);
+      background: rgba(25, 195, 125, 0.12);
+    }
+    .copy-all { font-size: 12px; }
+    .sr-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin: 18px 0 12px; flex-wrap: wrap;
+    }
+    .sr-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .sr-panel { grid-template-columns: 1fr; } }
+    .sr-group {
+      padding: 12px 14px; border: 1px solid var(--border);
+      border-radius: 10px; background: var(--surface-2);
+    }
+    .sr-group-title {
+      display: block; margin-bottom: 8px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .sr-res .sr-group-title { color: var(--negative); }
+    .sr-sup .sr-group-title { color: var(--positive); }
+    .sr-level {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; border-top: 1px solid var(--border);
+    }
+    .sr-level:first-of-type { border-top: none; }
+    .sr-tag {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      min-width: 22px;
+    }
+    .sr-value { font-size: 15px; font-weight: 600; flex: 1; }
     .meta {
       display: flex; flex-wrap: wrap; gap: 12px;
       margin-top: 20px; padding-top: 16px;
@@ -162,22 +225,34 @@
           <div class="card-title">Análise do Pregão</div>
         </div>
         <div class="card-body">
+          <div class="quote-head">
+            <span class="quote-section-title">Dados do Dia</span>
+            <button class="copy-btn copy-all" type="button" data-copy="{{ohlcCopy}}" aria-label="Copiar todos os dados do dia">Copiar OHLC do dia</button>
+          </div>
           <div class="quote-row">
             <div class="quote-cell">
-              <span class="quote-label">Fechamento</span>
-              <span class="quote-value">{{close}}</span>
+              <span class="quote-label">Ticker atual</span>
+              <span class="quote-value-row"><span class="quote-value">{{ticker}}</span><button class="copy-btn" type="button" data-copy="{{ticker}}" aria-label="Copiar ticker">Copiar</button></span>
             </div>
             <div class="quote-cell">
-              <span class="quote-label">Variação</span>
-              <span class="quote-value quote-change {{changeClass}}">{{percent_change}}%</span>
+              <span class="quote-label">Abertura</span>
+              <span class="quote-value-row"><span class="quote-value">{{open}}</span><button class="copy-btn" type="button" data-copy="{{open}}" aria-label="Copiar abertura">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Máx.</span>
-              <span class="quote-value">{{high}}</span>
+              <span class="quote-value-row"><span class="quote-value">{{high}}</span><button class="copy-btn" type="button" data-copy="{{high}}" aria-label="Copiar máxima">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Mín.</span>
-              <span class="quote-value">{{low}}</span>
+              <span class="quote-value-row"><span class="quote-value">{{low}}</span><button class="copy-btn" type="button" data-copy="{{low}}" aria-label="Copiar mínima">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Fechamento</span>
+              <span class="quote-value-row"><span class="quote-value">{{close}}</span><button class="copy-btn" type="button" data-copy="{{close}}" aria-label="Copiar fechamento">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Variação</span>
+              <span class="quote-value-row"><span class="quote-value quote-change {{changeClass}}">{{variacaoDisplay}}</span><button class="copy-btn" type="button" data-copy="{{variacaoDisplay}}" aria-label="Copiar variação">Copiar</button></span>
             </div>
           </div>
 
@@ -185,10 +260,24 @@
 {{quantPanelHtml}}
           </div>
 
-          <p class="analise-tecnica">{{analiseTexto}}</p>
+          <div class="sr-head">
+            <span class="quote-section-title">Suportes e Resistências</span>
+            <button class="copy-btn copy-all" type="button" data-copy="{{srCopy}}" aria-label="Copiar suportes e resistências">Copiar S/R</button>
+          </div>
+          <div class="sr-panel">
+            <div class="sr-group sr-res">
+              <span class="sr-group-title">Resistências</span>
+{{resistenciasHtml}}
+            </div>
+            <div class="sr-group sr-sup">
+              <span class="sr-group-title">Suportes</span>
+{{suportesHtml}}
+            </div>
+          </div>
+
+          {{analiseHtml}}
 
           <div class="meta">
-            <span>Abertura: <strong>{{open}}</strong></span>
             <span>Timeframe: <strong>{{timeframe}}</strong></span>
             <span>Última coleta: <strong>{{coletadoEm}}</strong></span>
           </div>
@@ -205,5 +294,49 @@
       <a class="share" href="#" onclick="navigator.clipboard.writeText(location.href); this.innerText='Link copiado'; return false;">Compartilhar link</a>
     </footer>
   </div>
+
+  <script>
+    // Botões "Copiar": valor único via data-copy; texto da análise via .copy-text.
+    (function () {
+      function feedback(btn) {
+        var original = btn.getAttribute("data-label") || btn.textContent;
+        btn.setAttribute("data-label", original);
+        btn.textContent = "Copiado!";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove("copied");
+        }, 1200);
+      }
+      function copy(text, btn) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { feedback(btn); }).catch(function () { fallback(text, btn); });
+        } else {
+          fallback(text, btn);
+        }
+      }
+      function fallback(text, btn) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); feedback(btn); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest(".copy-btn");
+        if (!btn) return;
+        var text = btn.getAttribute("data-copy");
+        if (text == null && btn.classList.contains("copy-text")) {
+          var wrap = btn.closest(".analise-versao");
+          var p = wrap && wrap.querySelector(".analise-tecnica");
+          text = p ? p.innerText : "";
+        }
+        if (text != null) copy(text, btn);
+      });
+    })();
+  </script>
 </body>
 </html>

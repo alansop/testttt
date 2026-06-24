@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Mini Índice (WIN) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Mini Índice (WIN) | Genial Investimentos" />
-  <meta property="og:description" content="O Mini Índice (WIN) apresentou uma consolidação no último pregão, com uma variação diária de -0,22%, dentro de um intervalo de 171.700 a 171.945. Essa movimentação reforça a tendên…" />
+  <meta property="og:description" content="O ativo Mini Índice (WIN) fechou o último pregão em alta, com variação diária de 1.07%, alinhado à tendência de alta observada no curto prazo. Iniciou a semana em alta, o que pode …" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Mini Índice (WIN) | Genial Investimentos</title>
@@ -69,6 +69,69 @@
       font-size: 15.5px; line-height: 1.7; color: var(--text);
       margin: 0;
     }
+    .analise-versao { margin-bottom: 18px; }
+    .analise-versao:last-child { margin-bottom: 0; }
+    .analise-versao-label {
+      display: inline-block; margin-bottom: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .analise-tecnica strong { color: var(--text); font-weight: 700; }
+    .quote-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .quote-section-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .quote-value-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .analise-versao-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 8px;
+    }
+    .copy-btn {
+      cursor: pointer;
+      font: inherit; font-size: 11px; font-weight: 600;
+      line-height: 1; white-space: nowrap;
+      color: var(--accent); background: rgba(255, 184, 0, 0.08);
+      border: 1px solid rgba(255, 184, 0, 0.25); border-radius: 6px;
+      padding: 4px 8px; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { background: rgba(255, 184, 0, 0.16); }
+    .copy-btn.copied {
+      color: var(--positive);
+      border-color: rgba(25, 195, 125, 0.4);
+      background: rgba(25, 195, 125, 0.12);
+    }
+    .copy-all { font-size: 12px; }
+    .sr-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin: 18px 0 12px; flex-wrap: wrap;
+    }
+    .sr-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .sr-panel { grid-template-columns: 1fr; } }
+    .sr-group {
+      padding: 12px 14px; border: 1px solid var(--border);
+      border-radius: 10px; background: var(--surface-2);
+    }
+    .sr-group-title {
+      display: block; margin-bottom: 8px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .sr-res .sr-group-title { color: var(--negative); }
+    .sr-sup .sr-group-title { color: var(--positive); }
+    .sr-level {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; border-top: 1px solid var(--border);
+    }
+    .sr-level:first-of-type { border-top: none; }
+    .sr-tag {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      min-width: 22px;
+    }
+    .sr-value { font-size: 15px; font-weight: 600; flex: 1; }
     .meta {
       display: flex; flex-wrap: wrap; gap: 12px;
       margin-top: 20px; padding-top: 16px;
@@ -122,7 +185,7 @@
     </header>
 
     <h1>Mini Índice (WIN) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 21/06/2026, 01:53</div>
+    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 23/06/2026, 01:33</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -162,58 +225,125 @@
           <div class="card-title">Análise do Pregão</div>
         </div>
         <div class="card-body">
+          <div class="quote-head">
+            <span class="quote-section-title">Dados do Dia</span>
+            <button class="copy-btn copy-all" type="button" data-copy="WINQ26 | Abertura: 171.590 | Máxima: 173.890 | Mínima: 170.210 | Fechamento: 173.490 | Variação: 1,07" aria-label="Copiar todos os dados do dia">Copiar OHLC do dia</button>
+          </div>
           <div class="quote-row">
             <div class="quote-cell">
-              <span class="quote-label">Fechamento</span>
-              <span class="quote-value">171.645</span>
+              <span class="quote-label">Ticker atual</span>
+              <span class="quote-value-row"><span class="quote-value">WINQ26</span><button class="copy-btn" type="button" data-copy="WINQ26" aria-label="Copiar ticker">Copiar</button></span>
             </div>
             <div class="quote-cell">
-              <span class="quote-label">Variação</span>
-              <span class="quote-value quote-change negative">-0.22%</span>
+              <span class="quote-label">Abertura</span>
+              <span class="quote-value-row"><span class="quote-value">171.590</span><button class="copy-btn" type="button" data-copy="171.590" aria-label="Copiar abertura">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Máx.</span>
-              <span class="quote-value">171.945</span>
+              <span class="quote-value-row"><span class="quote-value">173.890</span><button class="copy-btn" type="button" data-copy="173.890" aria-label="Copiar máxima">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Mín.</span>
-              <span class="quote-value">170.730</span>
+              <span class="quote-value-row"><span class="quote-value">170.210</span><button class="copy-btn" type="button" data-copy="170.210" aria-label="Copiar mínima">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Fechamento</span>
+              <span class="quote-value-row"><span class="quote-value">173.490</span><button class="copy-btn" type="button" data-copy="173.490" aria-label="Copiar fechamento">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Variação</span>
+              <span class="quote-value-row"><span class="quote-value quote-change positive">1,07</span><button class="copy-btn" type="button" data-copy="1,07" aria-label="Copiar variação">Copiar</button></span>
             </div>
           </div>
 
           <div class="quant-panel" aria-label="Performance em múltiplos prazos">
 <div class="quant-cell">
               <span class="quant-label">Semana</span>
-              <span class="quant-value negative">-1.66%</span>
+              <span class="quant-value positive">+1.07%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Mês</span>
-              <span class="quant-value negative">-3.69%</span>
+              <span class="quant-value negative">-2.65%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Trimestre</span>
-              <span class="quant-value negative">-12.76%</span>
+              <span class="quant-value negative">-11.82%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Semestre</span>
-              <span class="quant-value negative">-1.35%</span>
+              <span class="quant-value negative">-0.29%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">12 Meses</span>
-              <span class="quant-value positive">+6.80%</span>
+              <span class="quant-value positive">+9.45%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Ano (YTD)</span>
-              <span class="quant-value negative">-1.35%</span>
+              <span class="quant-value negative">-0.29%</span>
             </div>
           </div>
 
-          <p class="analise-tecnica">O Mini Índice (WIN) apresentou uma consolidação no último pregão, com uma variação diária de -0,22%, dentro de um intervalo de 171.700 a 171.945. Essa movimentação reforça a tendência negativa observada nos prazos mais longos, como a variação semanal de -1,66% e a variação mensal de -3,69%, o que sugere que o ativo se aproxima de mínimas recentes relevantes. Com base nas máximas e mínimas diárias, os níveis técnicos mais próximos são a resistência em 171.945 e o suporte em 170.730. Considerando a continuidade da tendência descendente, o viés esperado para o próximo pregão é de baixa, com a manutenção abaixo de 171.645 confirmndo o cenário de declínio, enquanto a superação de 171.945 poderia indicar uma possível lateralização ou reversão.</p>
+          <div class="sr-head">
+            <span class="quote-section-title">Suportes e Resistências</span>
+            <button class="copy-btn copy-all" type="button" data-copy="Resistências: 174.000 / 175.000 / 176.000 | Suportes: 173.000 / 172.000 / 171.000" aria-label="Copiar suportes e resistências">Copiar S/R</button>
+          </div>
+          <div class="sr-panel">
+            <div class="sr-group sr-res">
+              <span class="sr-group-title">Resistências</span>
+<div class="sr-level">
+              <span class="sr-tag">R1</span>
+              <span class="sr-value">174.000</span>
+              <button class="copy-btn" type="button" data-copy="174.000" aria-label="Copiar R1">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">R2</span>
+              <span class="sr-value">175.000</span>
+              <button class="copy-btn" type="button" data-copy="175.000" aria-label="Copiar R2">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">R3</span>
+              <span class="sr-value">176.000</span>
+              <button class="copy-btn" type="button" data-copy="176.000" aria-label="Copiar R3">Copiar</button>
+            </div>
+            </div>
+            <div class="sr-group sr-sup">
+              <span class="sr-group-title">Suportes</span>
+<div class="sr-level">
+              <span class="sr-tag">S1</span>
+              <span class="sr-value">173.000</span>
+              <button class="copy-btn" type="button" data-copy="173.000" aria-label="Copiar S1">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">S2</span>
+              <span class="sr-value">172.000</span>
+              <button class="copy-btn" type="button" data-copy="172.000" aria-label="Copiar S2">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">S3</span>
+              <span class="sr-value">171.000</span>
+              <button class="copy-btn" type="button" data-copy="171.000" aria-label="Copiar S3">Copiar</button>
+            </div>
+            </div>
+          </div>
+
+          <div class="analise-versao">
+            <div class="analise-versao-head">
+              <span class="analise-versao-label">Versão Trader</span>
+              <button class="copy-btn copy-text" type="button" aria-label="Copiar Versão Trader">Copiar texto</button>
+            </div>
+            <p class="analise-tecnica">O ativo Mini Índice (WIN) fechou o último pregão em alta, com variação diária de 1.07%, alinhado à tendência de alta observada no curto prazo. Iniciou a semana em alta, o que pode ser um indicador positivo para os próximos dias. Com essa performance, o preço se aproximou de patamares mais altos, reforçando a movimentação de alta no curto prazo. As referências numéricas para o próximo pregão apontam a resistência mais próxima em 175.000 e o suporte em 171.000, derivados da máxima e mínima do dia, respectivamente. A manutenção acima do suporte de 171.000 mantém o panorama de força compradora, abrindo espaço para o teste da resistência em 175.000. O cenário de alta perde força caso o mercado se estabeleça abaixo do suporte de 171.000. Considerando o contexto de pano de fundo, o ativo inicia a semana em alta, o que pode ser um sinal positivo, apesar das variações negativas nos prazos mais longos, como o mês e o trimestre. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
+          </div>
+          <div class="analise-versao">
+            <div class="analise-versao-head">
+              <span class="analise-versao-label">Versão Técnica</span>
+              <button class="copy-btn copy-text" type="button" aria-label="Copiar Versão Técnica">Copiar texto</button>
+            </div>
+            <p class="analise-tecnica">O ativo Mini Índice (WIN) registrou variação diária positiva de 1.07%, indicando uma tendência de alta no curto prazo. Iniciou a semana em alta, o que compõe o cenário de movimentação de alta recente. Do ponto de vista estatístico, a resistência mais próxima da máxima do dia (173.890) é 175.000, e o suporte mais próximo da mínima do dia (170.210) é 171.000. A manutenção acima do suporte de 171.000 valida a continuidade do fluxo comprador com projeção na resistência de 175.000. O viés de alta é neutralizado apenas com fechamento abaixo do suporte de 171.000. Considerando o contexto de pano de fundo, o ativo apresenta variações negativas nos prazos mais longos, como o mês e o trimestre, mas a tendência de alta no curto prazo é o fator mais relevante para a definição da direção do mercado. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
+          </div>
 
           <div class="meta">
-            <span>Abertura: <strong>171.700</strong></span>
             <span>Timeframe: <strong>Gráfico Intraday de 15 minutos (M15)</strong></span>
-            <span>Última coleta: <strong>21/06/2026, 01:53</strong></span>
+            <span>Última coleta: <strong>23/06/2026, 01:32</strong></span>
           </div>
         </div>
       </aside>
@@ -228,5 +358,49 @@
       <a class="share" href="#" onclick="navigator.clipboard.writeText(location.href); this.innerText='Link copiado'; return false;">Compartilhar link</a>
     </footer>
   </div>
+
+  <script>
+    // Botões "Copiar": valor único via data-copy; texto da análise via .copy-text.
+    (function () {
+      function feedback(btn) {
+        var original = btn.getAttribute("data-label") || btn.textContent;
+        btn.setAttribute("data-label", original);
+        btn.textContent = "Copiado!";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove("copied");
+        }, 1200);
+      }
+      function copy(text, btn) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { feedback(btn); }).catch(function () { fallback(text, btn); });
+        } else {
+          fallback(text, btn);
+        }
+      }
+      function fallback(text, btn) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); feedback(btn); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest(".copy-btn");
+        if (!btn) return;
+        var text = btn.getAttribute("data-copy");
+        if (text == null && btn.classList.contains("copy-text")) {
+          var wrap = btn.closest(".analise-versao");
+          var p = wrap && wrap.querySelector(".analise-tecnica");
+          text = p ? p.innerText : "";
+        }
+        if (text != null) copy(text, btn);
+      });
+    })();
+  </script>
 </body>
 </html>

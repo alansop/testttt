@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Ibovespa (IBOV) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Ibovespa (IBOV) | Genial Investimentos" />
-  <meta property="og:description" content="O Ibovespa fechou o último pregão em alta, com uma variação diária de 1,21%, o que indica uma tendência de alta no curto prazo. Considerando a performance na semana, que apresentou…" />
+  <meta property="og:description" content="O Ibovespa fechou o último pregão em alta, com variação diária de 1,21%, o que coloca o ativo em uma tendência de alta no curto prazo. Essa movimentação positiva inicia a semana em…" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Ibovespa (IBOV) | Genial Investimentos</title>
@@ -77,6 +77,61 @@
       text-transform: uppercase; color: var(--accent);
     }
     .analise-tecnica strong { color: var(--text); font-weight: 700; }
+    .quote-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .quote-section-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .quote-value-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .analise-versao-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 8px;
+    }
+    .copy-btn {
+      cursor: pointer;
+      font: inherit; font-size: 11px; font-weight: 600;
+      line-height: 1; white-space: nowrap;
+      color: var(--accent); background: rgba(255, 184, 0, 0.08);
+      border: 1px solid rgba(255, 184, 0, 0.25); border-radius: 6px;
+      padding: 4px 8px; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { background: rgba(255, 184, 0, 0.16); }
+    .copy-btn.copied {
+      color: var(--positive);
+      border-color: rgba(25, 195, 125, 0.4);
+      background: rgba(25, 195, 125, 0.12);
+    }
+    .copy-all { font-size: 12px; }
+    .sr-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin: 18px 0 12px; flex-wrap: wrap;
+    }
+    .sr-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .sr-panel { grid-template-columns: 1fr; } }
+    .sr-group {
+      padding: 12px 14px; border: 1px solid var(--border);
+      border-radius: 10px; background: var(--surface-2);
+    }
+    .sr-group-title {
+      display: block; margin-bottom: 8px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .sr-res .sr-group-title { color: var(--negative); }
+    .sr-sup .sr-group-title { color: var(--positive); }
+    .sr-level {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; border-top: 1px solid var(--border);
+    }
+    .sr-level:first-of-type { border-top: none; }
+    .sr-tag {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      min-width: 22px;
+    }
+    .sr-value { font-size: 15px; font-weight: 600; flex: 1; }
     .meta {
       display: flex; flex-wrap: wrap; gap: 12px;
       margin-top: 20px; padding-top: 16px;
@@ -130,7 +185,7 @@
     </header>
 
     <h1>Ibovespa (IBOV) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Diário (1D) · Atualizado em 23/06/2026, 01:00</div>
+    <div class="subtitle">Gráfico Diário (1D) · Atualizado em 23/06/2026, 01:33</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -170,65 +225,125 @@
           <div class="card-title">Análise do Pregão</div>
         </div>
         <div class="card-body">
+          <div class="quote-head">
+            <span class="quote-section-title">Dados do Dia</span>
+            <button class="copy-btn copy-all" type="button" data-copy="IBOV | Abertura: 168.334 | Máxima: 170.750 | Mínima: 168.326 | Fechamento: 170.370 | Variação: 1,21" aria-label="Copiar todos os dados do dia">Copiar OHLC do dia</button>
+          </div>
           <div class="quote-row">
             <div class="quote-cell">
-              <span class="quote-label">Fechamento</span>
-              <span class="quote-value">170.370</span>
+              <span class="quote-label">Ticker atual</span>
+              <span class="quote-value-row"><span class="quote-value">IBOV</span><button class="copy-btn" type="button" data-copy="IBOV" aria-label="Copiar ticker">Copiar</button></span>
             </div>
             <div class="quote-cell">
-              <span class="quote-label">Variação</span>
-              <span class="quote-value quote-change positive">1.21%</span>
+              <span class="quote-label">Abertura</span>
+              <span class="quote-value-row"><span class="quote-value">168.334</span><button class="copy-btn" type="button" data-copy="168.334" aria-label="Copiar abertura">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Máx.</span>
-              <span class="quote-value">170.750</span>
+              <span class="quote-value-row"><span class="quote-value">170.750</span><button class="copy-btn" type="button" data-copy="170.750" aria-label="Copiar máxima">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Mín.</span>
-              <span class="quote-value">168.326</span>
+              <span class="quote-value-row"><span class="quote-value">168.326</span><button class="copy-btn" type="button" data-copy="168.326" aria-label="Copiar mínima">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Fechamento</span>
+              <span class="quote-value-row"><span class="quote-value">170.370</span><button class="copy-btn" type="button" data-copy="170.370" aria-label="Copiar fechamento">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Variação</span>
+              <span class="quote-value-row"><span class="quote-value quote-change positive">1,21</span><button class="copy-btn" type="button" data-copy="1,21" aria-label="Copiar variação">Copiar</button></span>
             </div>
           </div>
 
           <div class="quant-panel" aria-label="Performance em múltiplos prazos">
 <div class="quant-cell">
               <span class="quant-label">Semana</span>
-              <span class="quant-value positive">+17658950327.00%</span>
-            </div>
-<div class="quant-cell">
-              <span class="quant-label">Mês</span>
               <span class="quant-value positive">+1.21%</span>
             </div>
 <div class="quant-cell">
-              <span class="quant-label">Trimestre</span>
-              <span class="quant-value positive">+5.74%</span>
+              <span class="quant-label">Mês</span>
+              <span class="quant-value negative">-1.97%</span>
             </div>
 <div class="quant-cell">
-              <span class="quant-label">Semestre</span>
+              <span class="quant-label">Trimestre</span>
               <span class="quant-value negative">-9.12%</span>
             </div>
 <div class="quant-cell">
+              <span class="quant-label">Semestre</span>
+              <span class="quant-value positive">+5.74%</span>
+            </div>
+<div class="quant-cell">
               <span class="quant-label">12 Meses</span>
-              <span class="quant-value positive">+7.51%</span>
+              <span class="quant-value positive">+24.25%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Ano (YTD)</span>
-              <span class="quant-value positive">+24.25%</span>
+              <span class="quant-value positive">+5.74%</span>
+            </div>
+          </div>
+
+          <div class="sr-head">
+            <span class="quote-section-title">Suportes e Resistências</span>
+            <button class="copy-btn copy-all" type="button" data-copy="Resistências: 171.000 / 172.000 / 173.000 | Suportes: 170.000 / 169.000 / 168.000" aria-label="Copiar suportes e resistências">Copiar S/R</button>
+          </div>
+          <div class="sr-panel">
+            <div class="sr-group sr-res">
+              <span class="sr-group-title">Resistências</span>
+<div class="sr-level">
+              <span class="sr-tag">R1</span>
+              <span class="sr-value">171.000</span>
+              <button class="copy-btn" type="button" data-copy="171.000" aria-label="Copiar R1">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">R2</span>
+              <span class="sr-value">172.000</span>
+              <button class="copy-btn" type="button" data-copy="172.000" aria-label="Copiar R2">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">R3</span>
+              <span class="sr-value">173.000</span>
+              <button class="copy-btn" type="button" data-copy="173.000" aria-label="Copiar R3">Copiar</button>
+            </div>
+            </div>
+            <div class="sr-group sr-sup">
+              <span class="sr-group-title">Suportes</span>
+<div class="sr-level">
+              <span class="sr-tag">S1</span>
+              <span class="sr-value">170.000</span>
+              <button class="copy-btn" type="button" data-copy="170.000" aria-label="Copiar S1">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">S2</span>
+              <span class="sr-value">169.000</span>
+              <button class="copy-btn" type="button" data-copy="169.000" aria-label="Copiar S2">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">S3</span>
+              <span class="sr-value">168.000</span>
+              <button class="copy-btn" type="button" data-copy="168.000" aria-label="Copiar S3">Copiar</button>
+            </div>
             </div>
           </div>
 
           <div class="analise-versao">
-            <span class="analise-versao-label">Versão Trader</span>
-            <p class="analise-tecnica">O Ibovespa fechou o último pregão em alta, com uma variação diária de 1,21%, o que indica uma tendência de alta no curto prazo. Considerando a performance na semana, que apresentou um aumento expressivo, e no mês, que também mostrou alta, reforça a ideia de que o mercado está em uma movimentação de alta. A máxima do dia em 170.750 e a mínima em 168.326 sugerem que a resistência mais próxima está em torno de 171.000 e o suporte em 169.000. Com o fechamento em 170.370, o mercado parece estar sustentando a alta, mas é importante observar se conseguirá manter essa tendência. A manutenção acima de 169.000 seria um sinal de continuidade da força compradora, enquanto a perda de 169.000 poderia indicar uma possível desaceleração. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
+            <div class="analise-versao-head">
+              <span class="analise-versao-label">Versão Trader</span>
+              <button class="copy-btn copy-text" type="button" aria-label="Copiar Versão Trader">Copiar texto</button>
+            </div>
+            <p class="analise-tecnica">O Ibovespa fechou o último pregão em alta, com variação diária de 1,21%, o que coloca o ativo em uma tendência de alta no curto prazo. Essa movimentação positiva inicia a semana em alta, apesar de o mês e o trimestre ainda apresentarem desempenhos negativos. A máxima do dia em 170.750 e a mínima em 168.326 servem como referências para o próximo pregão, com a resistência mais próxima em 171.000 e o suporte em 169.000. A manutenção acima de 169.000 sustenta o cenário comprador, enquanto a perda de 169.000 poderia indicar uma desaceleração da força compradora. O ativo inicia a semana pressionado pelo contexto de longo prazo, mas a leitura de curto prazo aponta para uma movimentação de alta. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
           </div>
           <div class="analise-versao">
-            <span class="analise-versao-label">Versão Técnica</span>
-            <p class="analise-tecnica">O Ibovespa registrou uma variação diária positiva de 1,21%, alinhada à tendência de alta observada no curto prazo. A performance semanal apresentou um aumento significativo, e no mês, a variação também foi positiva, o que reforça a ideia de uma movimentação de alta. Com base nos dados do dia, a resistência mais próxima da máxima de 170.750 pode ser estimada em 171.000, e o suporte mais próximo da mínima de 168.326 em 169.000. O fechamento em 170.370 sugere que o mercado está sustentando a alta, mas é crucial monitorar se essa tendência se manterá. A sustentação acima de 169.000 validaria a continuidade da força compradora, enquanto a perda de 169.000 poderia sinalizar uma desaceleração da alta. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
+            <div class="analise-versao-head">
+              <span class="analise-versao-label">Versão Técnica</span>
+              <button class="copy-btn copy-text" type="button" aria-label="Copiar Versão Técnica">Copiar texto</button>
+            </div>
+            <p class="analise-tecnica">O Ibovespa registrou uma variação diária positiva de 1,21%, alinhando-se a uma tendência de alta no curto prazo. Com isso, o ativo inicia a semana em alta, contra o pano de fundo de um mês e trimestre com desempenhos negativos. As referências numéricas para o próximo pregão são uma resistência em 171.000, derivada da máxima do dia em 170.750, e um suporte em 169.000, próximo à mínima do dia em 168.326. A sustentação acima de 169.000 valida a continuidade do fluxo comprador, enquanto a perda de 169.000 poderia sinalizar uma exaustão da força compradora. O contexto de longo prazo ainda apresenta desafios, mas a leitura técnica de curto prazo sugere uma movimentação de alta. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
           </div>
 
           <div class="meta">
-            <span>Abertura: <strong>168.334</strong></span>
             <span>Timeframe: <strong>Gráfico Diário (1D)</strong></span>
-            <span>Última coleta: <strong>23/06/2026, 01:00</strong></span>
+            <span>Última coleta: <strong>23/06/2026, 01:32</strong></span>
           </div>
         </div>
       </aside>
@@ -243,5 +358,49 @@
       <a class="share" href="#" onclick="navigator.clipboard.writeText(location.href); this.innerText='Link copiado'; return false;">Compartilhar link</a>
     </footer>
   </div>
+
+  <script>
+    // Botões "Copiar": valor único via data-copy; texto da análise via .copy-text.
+    (function () {
+      function feedback(btn) {
+        var original = btn.getAttribute("data-label") || btn.textContent;
+        btn.setAttribute("data-label", original);
+        btn.textContent = "Copiado!";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove("copied");
+        }, 1200);
+      }
+      function copy(text, btn) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { feedback(btn); }).catch(function () { fallback(text, btn); });
+        } else {
+          fallback(text, btn);
+        }
+      }
+      function fallback(text, btn) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); feedback(btn); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest(".copy-btn");
+        if (!btn) return;
+        var text = btn.getAttribute("data-copy");
+        if (text == null && btn.classList.contains("copy-text")) {
+          var wrap = btn.closest(".analise-versao");
+          var p = wrap && wrap.querySelector(".analise-tecnica");
+          text = p ? p.innerText : "";
+        }
+        if (text != null) copy(text, btn);
+      });
+    })();
+  </script>
 </body>
 </html>

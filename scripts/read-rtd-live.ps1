@@ -33,6 +33,21 @@ function ToNum {
     try { return [double]$v } catch { return $null }
 }
 
+# Normaliza um cabeçalho para casamento robusto: tira acentos, espaços extras,
+# e deixa minúsculo. Assim "Máximo", "Variação", "Mês" casam mesmo com acentuação.
+function Norm {
+    param($s)
+    if ($null -eq $s) { return "" }
+    $t = "$s".Trim().ToLowerInvariant().Normalize([Text.NormalizationForm]::FormD)
+    $sb = New-Object System.Text.StringBuilder
+    foreach ($ch in $t.ToCharArray()) {
+        if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($ch) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
+            [void]$sb.Append($ch)
+        }
+    }
+    return ($sb.ToString() -replace '\s+', ' ').Trim()
+}
+
 $excel = $null
 try {
     $excel = [System.Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")
@@ -50,42 +65,67 @@ if (-not $wb) {
     exit 1
 }
 
-# Colunas (base 1):
-# A=1 Asset, B=2 Data, C=3 Hora, D=4 Ultimo(close), E=5 Abertura(open),
-# F=6 Maximo(high), G=7 Minimo(low), H=8 FechamentoAnterior(prev_close),
-# I=9 Variacao%(var_pct), L=12 Volume, P=16 Semana, Q=17 Mes, R=18 TresMeses,
-# S=19 SeisMeses, T=20 DozeMeses, U=21 Ano, V=22 Trimestre, W=23 Semestre,
-# AA=27 IFR(RSI), AC=29 VolatilidadeHistoricaMedia
 $ws = $wb.Sheets.Item(1)
+
+# Mapeia cabeçalho normalizado -> número da coluna (1ª ocorrência). Isso torna a
+# leitura imune a inserção/remoção/reordenação de colunas: buscamos pelo NOME, não
+# pela posição fixa. Há blocos de colunas repetidos na planilha (ex.: "Semana"
+# aparece mais de uma vez); ficamos com a primeira ocorrência.
+$colCount = $ws.UsedRange.Columns.Count
+$colMap = @{}
+for ($c = 1; $c -le $colCount; $c++) {
+    $name = Norm $ws.Cells.Item(1, $c).Value2
+    if ($name -ne "" -and -not $colMap.ContainsKey($name)) { $colMap[$name] = $c }
+}
+
+# Lê um campo numérico da linha pelo nome do cabeçalho (aceita alternativas).
+function CellNum {
+    param([int]$row, [string[]]$nomes)
+    foreach ($n in $nomes) {
+        $key = Norm $n
+        if ($colMap.ContainsKey($key)) { return ToNum $ws.Cells.Item($row, $colMap[$key]).Value2 }
+    }
+    return $null
+}
+function CellText {
+    param([int]$row, [string[]]$nomes)
+    foreach ($n in $nomes) {
+        $key = Norm $n
+        if ($colMap.ContainsKey($key)) { return "$($ws.Cells.Item($row, $colMap[$key]).Value2)" }
+    }
+    return ""
+}
+
+$colAsset = if ($colMap.ContainsKey("asset")) { $colMap["asset"] } else { 1 }
 $front = @{}
 $perp  = @{}
 
 for ($row = 2; $row -le 20; $row++) {
-    $asset = $ws.Cells.Item($row, 1).Value2
+    $asset = $ws.Cells.Item($row, $colAsset).Value2
     if (-not $asset) { continue }
 
     $key = Get-AssetKey $asset
     if (-not $key) { continue }
 
-    $close      = ToNum $ws.Cells.Item($row, 4).Value2
-    $open       = ToNum $ws.Cells.Item($row, 5).Value2
-    $high       = ToNum $ws.Cells.Item($row, 6).Value2
-    $low        = ToNum $ws.Cells.Item($row, 7).Value2
-    $prevClose  = ToNum $ws.Cells.Item($row, 8).Value2
-    $varPct     = ToNum $ws.Cells.Item($row, 9).Value2
-    $volume     = ToNum $ws.Cells.Item($row, 12).Value2
-    $varSemana  = ToNum $ws.Cells.Item($row, 16).Value2
-    $varMes     = ToNum $ws.Cells.Item($row, 17).Value2
-    $var3m      = ToNum $ws.Cells.Item($row, 18).Value2
-    $var6m      = ToNum $ws.Cells.Item($row, 19).Value2
-    $var12m     = ToNum $ws.Cells.Item($row, 20).Value2
-    $varAno     = ToNum $ws.Cells.Item($row, 21).Value2
-    $varTri     = ToNum $ws.Cells.Item($row, 22).Value2
-    $varSem     = ToNum $ws.Cells.Item($row, 23).Value2
-    $rsiRaw     = ToNum $ws.Cells.Item($row, 27).Value2
-    $histVolRaw = ToNum $ws.Cells.Item($row, 29).Value2
-    $date       = "$($ws.Cells.Item($row, 2).Value2)"
-    $time       = "$($ws.Cells.Item($row, 3).Value2)"
+    $close      = CellNum $row @("Ultimo", "Último")
+    $open       = CellNum $row @("Abertura")
+    $high       = CellNum $row @("Maximo", "Máximo")
+    $low        = CellNum $row @("Minimo", "Mínimo")
+    $prevClose  = CellNum $row @("Fechamento Anterior")
+    $varPct     = CellNum $row @("Variacao", "Variação")
+    $volume     = CellNum $row @("Volume")
+    $varSemana  = CellNum $row @("Semana")
+    $varMes     = CellNum $row @("Mes", "Mês")
+    $var3m      = CellNum $row @("3 meses")
+    $var6m      = CellNum $row @("6 meses")
+    $var12m     = CellNum $row @("12 meses")
+    $varAno     = CellNum $row @("Ano")
+    $varTri     = CellNum $row @("Trimestre")
+    $varSem     = CellNum $row @("Semestre")
+    $rsiRaw     = CellNum $row @("IFR (RSI)", "IFR", "RSI")
+    $histVolRaw = CellNum $row @("Volatilidade Historica Media", "Volatilidade Histórica Média")
+    $date       = CellText $row @("Data")
+    $time       = CellText $row @("Hora")
 
     $isPerp = Test-IsPerpetuo $asset
 

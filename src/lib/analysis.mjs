@@ -6,7 +6,35 @@ import {
   USER_PROMPT_TEMPLATE,
   AUDIO_SYSTEM_PROMPT,
   AUDIO_USER_PROMPT_TEMPLATE,
+  DUAL_SYSTEM_PROMPT,
+  DUAL_USER_PROMPT_TEMPLATE,
+  DUAL_TRADER_MARK,
+  DUAL_TECNICA_MARK,
+  DUAL_CLOSING,
 } from "./prompts.mjs";
+
+// Garante a frase de encerramento obrigatória ("regra de ouro") ao fim de cada versão,
+// anexando-a caso o LLM tenha esquecido — sem duplicar se já estiver presente.
+function ensureClosing(texto) {
+  const t = texto.trim();
+  if (t.endsWith(DUAL_CLOSING)) return t;
+  const sep = /[.!?]$/.test(t) ? " " : ". ";
+  return `${t}${sep}${DUAL_CLOSING}`;
+}
+
+// Separa a saída de dupla versão do LLM (Versão Trader + Versão Técnica) em campos.
+// Retorna { trader, tecnica } ou null se os marcadores não forem encontrados.
+export function parseDualVersions(text) {
+  if (!text) return null;
+  const t = String(text);
+  const ti = t.indexOf(DUAL_TRADER_MARK);
+  const ci = t.indexOf(DUAL_TECNICA_MARK);
+  if (ti === -1 || ci === -1 || ci < ti) return null;
+  const trader = t.slice(ti + DUAL_TRADER_MARK.length, ci).trim();
+  const tecnica = t.slice(ci + DUAL_TECNICA_MARK.length).trim();
+  if (!trader || !tecnica) return null;
+  return { trader: ensureClosing(trader), tecnica: ensureClosing(tecnica) };
+}
 
 function rtdAssetKeyFromName(nome) {
   const n = String(nome || "").toUpperCase();
@@ -47,8 +75,8 @@ async function readRtdLive(assetKey) {
 // não está aberto ou não está acessível via COM — ex: ambiente não-Windows).
 // Colunas da planilha: A=Asset, B=Data, C=Hora, D=Último(close), E=Abertura(open),
 // F=Máximo(high), G=Mínimo(low), H=Fechamento Anterior(prev_close), I=Variação%(var_pct),
-// P=Semana, Q=Mês, R=3 meses, S=6 meses, T=12 meses, U=Ano, V=Trimestre, W=Semestre,
-// AA=IFR(RSI), AC=Volatilidade Histórica Média.
+// J=Variação(pts), M=Volume, Q=Semana, R=Mês, S=3 meses, T=6 meses, U=12 meses,
+// V=Ano, W=Trimestre, X=Semestre, AP=IFR(RSI), AR=Volatilidade Histórica Média.
 //
 // Contratos futuros (WINQ26, WDON26 etc.) rolam a cada poucos meses, então as colunas
 // de retorno em prazos longos (6m/12m/Trimestre/Semestre/Ano) ficam truncadas ou
@@ -78,34 +106,65 @@ async function readRtdFromFile(assetKey) {
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true });
     const numOrNull = (v) => (typeof v === "number" ? v : null);
 
+    // Mapeia cabeçalho normalizado -> índice da coluna (1ª ocorrência), para ler
+    // pelo NOME e não pela posição — imune a inserção/remoção/reordenação de colunas.
+    const norm = (s) =>
+      String(s ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/\s+/g, " ");
+    const header = rows[0] || [];
+    const colMap = new Map();
+    header.forEach((h, i) => {
+      const n = norm(h);
+      if (n && !colMap.has(n)) colMap.set(n, i);
+    });
+    const at = (row, ...nomes) => {
+      for (const nm of nomes) {
+        const i = colMap.get(norm(nm));
+        if (i != null) return row[i];
+      }
+      return undefined;
+    };
+
     let front = null;
     let perp = null;
 
     for (const row of rows.slice(1)) {
-      const key = rtdAssetKeyFromName(row[0]);
+      const nome = at(row, "Asset") ?? row[0];
+      const key = rtdAssetKeyFromName(nome);
       if (key !== assetKey) continue;
 
       const periodos = {
-        var_semana: numOrNull(row[15]),
-        var_mes: numOrNull(row[16]),
-        var_3m: numOrNull(row[17]),
-        var_6m: numOrNull(row[18]),
-        var_12m: numOrNull(row[19]),
-        var_ano: numOrNull(row[20]),
-        var_tri: numOrNull(row[21]),
-        var_sem: numOrNull(row[22]),
+        var_semana: numOrNull(at(row, "Semana")),
+        var_mes: numOrNull(at(row, "Mes", "Mês")),
+        var_3m: numOrNull(at(row, "3 meses")),
+        var_6m: numOrNull(at(row, "6 meses")),
+        var_12m: numOrNull(at(row, "12 meses")),
+        var_ano: numOrNull(at(row, "Ano")),
+        var_tri: numOrNull(at(row, "Trimestre")),
+        var_sem: numOrNull(at(row, "Semestre")),
       };
 
-      if (isPerpetuo(row[0])) {
+      if (isPerpetuo(nome)) {
         if (!perp) perp = periodos;
         continue;
       }
 
       if (front) continue; // já temos o contrato corrente, ignora linhas extras
-      const [close, open, high, low, prevClose, varPct] = [row[3], row[4], row[5], row[6], row[7], row[8]];
+      const close = at(row, "Ultimo", "Último");
+      const open = at(row, "Abertura");
+      const high = at(row, "Maximo", "Máximo");
+      const low = at(row, "Minimo", "Mínimo");
+      const prevClose = at(row, "Fechamento Anterior");
+      const varPct = at(row, "Variacao", "Variação");
       if (!close || !open || !high || !low) continue;
-      const rsi = typeof row[26] === "number" && row[26] >= 0 && row[26] <= 100 ? row[26] : null;
-      const histVol = typeof row[28] === "number" ? row[28] : null;
+      const rsiRaw = at(row, "IFR (RSI)", "IFR", "RSI");
+      const rsi = typeof rsiRaw === "number" && rsiRaw >= 0 && rsiRaw <= 100 ? rsiRaw : null;
+      const histVolRaw = at(row, "Volatilidade Historica Media", "Volatilidade Histórica Média");
+      const histVol = typeof histVolRaw === "number" ? histVolRaw : null;
       front = {
         close,
         open,
@@ -113,12 +172,12 @@ async function readRtdFromFile(assetKey) {
         low,
         prev_close: prevClose ?? null,
         var_pct: varPct ?? null,
-        volume: row[11] ?? null,
+        volume: at(row, "Volume") ?? null,
         ...periodos,
         rsi,
         hist_vol: histVol,
-        date: row[1] ?? null,
-        time: row[2] ?? null,
+        date: at(row, "Data") ?? null,
+        time: at(row, "Hora") ?? null,
         ts: info.mtime.toISOString(),
       };
     }
@@ -131,6 +190,8 @@ async function readRtdFromFile(assetKey) {
   }
 }
 
+// roundStep: incremento dos níveis redondos de suporte/resistência exibidos na página
+// quando não há nível específico (índice = 1000; dólar = 10; bitcoin = 10000).
 export const ASSETS = {
   IBOV: {
     key: "IBOV",
@@ -139,6 +200,7 @@ export const ASSETS = {
     tvSymbol: "BMFBOVESPA:IBOV",
     tvInterval: "D",
     slug: "ibovespa",
+    roundStep: 1000,
     wpEnvKey: "WORDPRESS_PAGE_ID_IBOV",
   },
   WIN: {
@@ -148,6 +210,7 @@ export const ASSETS = {
     tvSymbol: "BMFBOVESPA:WIN1!",
     tvInterval: "15",
     slug: "mini-indice",
+    roundStep: 1000,
     wpEnvKey: "WORDPRESS_PAGE_ID_WIN",
   },
   WDO: {
@@ -157,6 +220,7 @@ export const ASSETS = {
     tvSymbol: "BMFBOVESPA:WDO1!",
     tvInterval: "15",
     slug: "mini-dolar",
+    roundStep: 10,
     wpEnvKey: "WORDPRESS_PAGE_ID_WDO",
   },
 };
@@ -181,7 +245,7 @@ export function formatNumber(value, decimals) {
 }
 
 
-async function callGroq({ apiKey, model, systemPrompt, userPrompt }) {
+async function callGroq({ apiKey, model, systemPrompt, userPrompt, maxTokens = 1400 }) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -195,7 +259,7 @@ async function callGroq({ apiKey, model, systemPrompt, userPrompt }) {
         { role: "user", content: userPrompt },
       ],
       temperature: 0.4,
-      max_tokens: 600,
+      max_tokens: maxTokens,
     }),
   });
   if (!res.ok) {
@@ -208,7 +272,7 @@ async function callGroq({ apiKey, model, systemPrompt, userPrompt }) {
   return text.trim().replace(/^["']|["']$/g, "");
 }
 
-async function callGemini({ apiKey, model, systemPrompt, userPrompt }) {
+async function callGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens = 1400 }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const body = {
     system_instruction: { parts: [{ text: systemPrompt }] },
@@ -216,7 +280,7 @@ async function callGemini({ apiKey, model, systemPrompt, userPrompt }) {
     generationConfig: {
       temperature: 0.4,
       topP: 0.9,
-      maxOutputTokens: 600,
+      maxOutputTokens: maxTokens,
     },
     safetySettings: [
       { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -240,9 +304,9 @@ async function callGemini({ apiKey, model, systemPrompt, userPrompt }) {
   return text.trim().replace(/^["']|["']$/g, "");
 }
 
-export async function callLLM({ provider, apiKey, model, systemPrompt, userPrompt }) {
-  if (provider === "groq") return callGroq({ apiKey, model, systemPrompt, userPrompt });
-  return callGemini({ apiKey, model, systemPrompt, userPrompt });
+export async function callLLM({ provider, apiKey, model, systemPrompt, userPrompt, maxTokens }) {
+  if (provider === "groq") return callGroq({ apiKey, model, systemPrompt, userPrompt, maxTokens });
+  return callGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens });
 }
 
 export function renderTemplate(template, vars) {
@@ -273,6 +337,7 @@ function ohlcFromRtd(rtd) {
     ? rtd.var_pct
     : (prevClose && prevClose !== 0 ? ((rtd.close - prevClose) / prevClose) * 100 : 0);
   return {
+    ticker: rtd.nome ?? null, // contrato corrente do RTD (ex.: WINQ26, WDON26, IBOV)
     open: rtd.open,
     high: rtd.high,
     low: rtd.low,
@@ -299,8 +364,21 @@ function ohlcFromRtd(rtd) {
 // 12 meses, ano) para dar ao LLM contexto de longo prazo além do candle do dia.
 function buildMultiPrazoBlock(ohlcDay) {
   const fmtPct = (v) => (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+  const dia = ohlcDay.percent_change;
+
+  // Início de semana: o acumulado semanal coincide com a variação do dia (ex.: segunda
+  // ou 1º pregão útil da semana). Nesse caso, dia e semana são o MESMO número — não dá
+  // para tratá-los como dois sinais que se confirmam, sob pena de soar redundante.
+  const semanaIgualDia =
+    ohlcDay.var_semana != null && dia != null &&
+    Math.abs(ohlcDay.var_semana - dia) < 0.02;
+
+  const linhaSemana = semanaIgualDia
+    ? `- Acumulado da Semana: ${fmtPct(ohlcDay.var_semana)} (semana em formação — igual à variação do dia)`
+    : `- Variação na Semana: ${fmtPct(ohlcDay.var_semana)}`;
+
   const linhas = [
-    ohlcDay.var_semana != null ? `- Variação na Semana: ${fmtPct(ohlcDay.var_semana)}` : null,
+    ohlcDay.var_semana != null ? linhaSemana : null,
     ohlcDay.var_mes    != null ? `- Variação no Mês: ${fmtPct(ohlcDay.var_mes)}` : null,
     ohlcDay.var_tri    != null ? `- Variação no Trimestre: ${fmtPct(ohlcDay.var_tri)}` : null,
     ohlcDay.var_3m     != null ? `- Variação em 3 Meses: ${fmtPct(ohlcDay.var_3m)}` : null,
@@ -310,7 +388,12 @@ function buildMultiPrazoBlock(ohlcDay) {
     ohlcDay.var_ano    != null ? `- Variação no Ano (YTD): ${fmtPct(ohlcDay.var_ano)}` : null,
   ].filter(Boolean);
   if (!linhas.length) return "";
-  return `\nPerformance em Múltiplos Prazos (use para contextualizar o pregão dentro da tendência maior — ex.: se a variação no dia segue na mesma direção da variação semanal/mensal negativa, isso reforça a leitura de proximidade de mínimas recentes; se o dia reage contra uma queda mensal/trimestral forte, isso sugere possível exaustão ou pivô):\n${linhas.join("\n")}`;
+
+  const notaSemana = semanaIgualDia
+    ? ` ATENÇÃO (início de semana): o acumulado da semana é idêntico à variação do dia, pois a semana está apenas começando. NÃO descreva o movimento do dia e o da semana como duas confirmações distintas (ex.: evite "subiu no pregão e também na semana") — seria redundante e de baixo nível. Em vez disso, enquadre o número como a ABERTURA da semana (ex.: "o ativo inicia a semana em alta/baixa", "abre a semana pressionado", "estreia a semana lateralizado") e apoie a leitura de tendência maior nos demais prazos (mês, trimestre, semestre).`
+    : "";
+
+  return `\nPerformance em Múltiplos Prazos (contexto de pano de fundo — NÃO deixe que estes números de longo prazo determinem a direção do mercado; a leitura de direção vem do movimento recente do dia e da semana. Use-os apenas para enriquecer o texto, sem sobrepor o curto prazo).${notaSemana}\n${linhas.join("\n")}`;
 }
 
 /**
@@ -361,7 +444,7 @@ export async function buildAnalysis(assetKey, opts = {}) {
 - Fechamento (15m): ${formatNumber(ohlc15m.close)}`
     : "";
 
-  const userPrompt = renderTemplate(opts.userPromptTpl || USER_PROMPT_TEMPLATE, {
+  const userPrompt = renderTemplate(opts.userPromptTpl || DUAL_USER_PROMPT_TEMPLATE, {
     ativo: asset.nome,
     open: formatNumber(ohlcDay.open),
     high: formatNumber(ohlcDay.high),
@@ -378,11 +461,15 @@ export async function buildAnalysis(assetKey, opts = {}) {
     provider,
     apiKey,
     model,
-    systemPrompt: opts.systemPrompt || SYSTEM_PROMPT,
+    systemPrompt: opts.systemPrompt || DUAL_SYSTEM_PROMPT,
     userPrompt,
   });
 
-  return { asset, ohlc: ohlcDay, ohlc15m, analiseTexto, userPrompt };
+  // Saída padrão das páginas: duas versões (Trader + Técnica). Se o parsing falhar
+  // (marcadores ausentes), versions fica null e os consumidores caem no texto corrido.
+  const versions = parseDualVersions(analiseTexto);
+
+  return { asset, ohlc: ohlcDay, ohlc15m, analiseTexto, versions, userPrompt };
 }
 
 /**

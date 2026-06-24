@@ -70,13 +70,17 @@ O bot combina sua narrativa com os dados exatos do RTD para gerar a análise fin
 ⚠️ _Conteúdo informativo. Análise técnica probabilística, sem recomendação direta. Investimentos em renda variável envolvem riscos._`;
 }
 
-function buildAnalysisReply(asset, ohlc, analiseTexto, baseUrl, fromAudio = false) {
+function buildAnalysisReply(asset, ohlc, analiseTexto, baseUrl, fromAudio = false, versions = null) {
   const emoji = ohlc.percent_change >= 0 ? "🟢" : "🔴";
   const audioTag = fromAudio ? " 🎙️" : "";
   const link =
     baseUrl && baseUrl.startsWith("http")
       ? `\n\n🔗 [Ver gráfico interativo](${baseUrl.replace(/\/$/, "")}/${asset.slug}.html)`
       : "";
+  // Quando há duas versões (texto automático das páginas), exibe ambas rotuladas.
+  const corpo = versions
+    ? `📈 *Versão Trader*\n${versions.trader}\n\n📐 *Versão Técnica*\n${versions.tecnica}`
+    : analiseTexto;
   return `📊 *${escapeMd(asset.nome)}* — Análise Técnica${audioTag}
 _${escapeMd(asset.timeframe)}_
 
@@ -84,7 +88,7 @@ ${emoji} *Fechamento:* ${formatNumber(ohlc.close)} (${ohlc.percent_change.toFixe
 *Máx. do Dia:* ${formatNumber(ohlc.high)}  ·  *Mín. do Dia:* ${formatNumber(ohlc.low)}
 *Abertura:* ${formatNumber(ohlc.open)}
 
-${analiseTexto}${link}
+${corpo}${link}
 
 ⚠️ _Análise técnica probabilística (CVM/CNPI). Não constitui recomendação de investimento._`;
 }
@@ -319,8 +323,8 @@ export default async function handler(req) {
     const placeholderId = placeholder?.result?.message_id;
 
     try {
-      const { asset, ohlc, analiseTexto } = await buildAnalysis(assetKey);
-      const replyText = buildAnalysisReply(asset, ohlc, analiseTexto, baseUrl);
+      const { asset, ohlc, analiseTexto, versions } = await buildAnalysis(assetKey);
+      const replyText = buildAnalysisReply(asset, ohlc, analiseTexto, baseUrl, false, versions);
 
       if (placeholderId) {
         await tg(token, "editMessageText", {

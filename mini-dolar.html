@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Análise técnica diária de Mini Dólar Futuro (WDO) — Genial Investimentos" />
   <meta property="og:title" content="Análise Técnica — Mini Dólar Futuro (WDO) | Genial Investimentos" />
-  <meta property="og:description" content="O Mini Dólar Futuro (WDO) apresentou uma consolidação no pregão, com uma variação diária de -0.19%, indicando uma tendência de curtíssimo prazo lateralizada. Considerando a perform…" />
+  <meta property="og:description" content="O ativo Mini Dólar Futuro (WDO) encerrou o último pregão em baixa, com uma variação diária de -0.22%, o que indica uma tendência de baixa no curto prazo. Considerando que o ativo i…" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="pt_BR" />
   <title>Análise Técnica — Mini Dólar Futuro (WDO) | Genial Investimentos</title>
@@ -69,6 +69,69 @@
       font-size: 15.5px; line-height: 1.7; color: var(--text);
       margin: 0;
     }
+    .analise-versao { margin-bottom: 18px; }
+    .analise-versao:last-child { margin-bottom: 0; }
+    .analise-versao-label {
+      display: inline-block; margin-bottom: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .analise-tecnica strong { color: var(--text); font-weight: 700; }
+    .quote-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .quote-section-title {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .quote-value-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .analise-versao-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 8px;
+    }
+    .copy-btn {
+      cursor: pointer;
+      font: inherit; font-size: 11px; font-weight: 600;
+      line-height: 1; white-space: nowrap;
+      color: var(--accent); background: rgba(255, 184, 0, 0.08);
+      border: 1px solid rgba(255, 184, 0, 0.25); border-radius: 6px;
+      padding: 4px 8px; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { background: rgba(255, 184, 0, 0.16); }
+    .copy-btn.copied {
+      color: var(--positive);
+      border-color: rgba(25, 195, 125, 0.4);
+      background: rgba(25, 195, 125, 0.12);
+    }
+    .copy-all { font-size: 12px; }
+    .sr-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin: 18px 0 12px; flex-wrap: wrap;
+    }
+    .sr-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .sr-panel { grid-template-columns: 1fr; } }
+    .sr-group {
+      padding: 12px 14px; border: 1px solid var(--border);
+      border-radius: 10px; background: var(--surface-2);
+    }
+    .sr-group-title {
+      display: block; margin-bottom: 8px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .sr-res .sr-group-title { color: var(--negative); }
+    .sr-sup .sr-group-title { color: var(--positive); }
+    .sr-level {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; border-top: 1px solid var(--border);
+    }
+    .sr-level:first-of-type { border-top: none; }
+    .sr-tag {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      min-width: 22px;
+    }
+    .sr-value { font-size: 15px; font-weight: 600; flex: 1; }
     .meta {
       display: flex; flex-wrap: wrap; gap: 12px;
       margin-top: 20px; padding-top: 16px;
@@ -122,7 +185,7 @@
     </header>
 
     <h1>Mini Dólar Futuro (WDO) — Análise Técnica Diária</h1>
-    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 21/06/2026, 01:53</div>
+    <div class="subtitle">Gráfico Intraday de 15 minutos (M15) · Atualizado em 23/06/2026, 01:33</div>
 
     <div class="grid">
       <section class="card" aria-label="Gráfico">
@@ -162,58 +225,125 @@
           <div class="card-title">Análise do Pregão</div>
         </div>
         <div class="card-body">
+          <div class="quote-head">
+            <span class="quote-section-title">Dados do Dia</span>
+            <button class="copy-btn copy-all" type="button" data-copy="WDON26 | Abertura: 5.167 | Máxima: 5.172 | Mínima: 5.135 | Fechamento: 5.154 | Variação: -0,22" aria-label="Copiar todos os dados do dia">Copiar OHLC do dia</button>
+          </div>
           <div class="quote-row">
             <div class="quote-cell">
-              <span class="quote-label">Fechamento</span>
-              <span class="quote-value">5.166</span>
+              <span class="quote-label">Ticker atual</span>
+              <span class="quote-value-row"><span class="quote-value">WDON26</span><button class="copy-btn" type="button" data-copy="WDON26" aria-label="Copiar ticker">Copiar</button></span>
             </div>
             <div class="quote-cell">
-              <span class="quote-label">Variação</span>
-              <span class="quote-value quote-change negative">-0.19%</span>
+              <span class="quote-label">Abertura</span>
+              <span class="quote-value-row"><span class="quote-value">5.167</span><button class="copy-btn" type="button" data-copy="5.167" aria-label="Copiar abertura">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Máx.</span>
-              <span class="quote-value">5.182</span>
+              <span class="quote-value-row"><span class="quote-value">5.172</span><button class="copy-btn" type="button" data-copy="5.172" aria-label="Copiar máxima">Copiar</button></span>
             </div>
             <div class="quote-cell">
               <span class="quote-label">Mín.</span>
-              <span class="quote-value">5.145</span>
+              <span class="quote-value-row"><span class="quote-value">5.135</span><button class="copy-btn" type="button" data-copy="5.135" aria-label="Copiar mínima">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Fechamento</span>
+              <span class="quote-value-row"><span class="quote-value">5.154</span><button class="copy-btn" type="button" data-copy="5.154" aria-label="Copiar fechamento">Copiar</button></span>
+            </div>
+            <div class="quote-cell">
+              <span class="quote-label">Variação</span>
+              <span class="quote-value-row"><span class="quote-value quote-change negative">-0,22</span><button class="copy-btn" type="button" data-copy="-0,22" aria-label="Copiar variação">Copiar</button></span>
             </div>
           </div>
 
           <div class="quant-panel" aria-label="Performance em múltiplos prazos">
 <div class="quant-cell">
               <span class="quant-label">Semana</span>
-              <span class="quant-value positive">+1.62%</span>
+              <span class="quant-value negative">-0.22%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Mês</span>
-              <span class="quant-value positive">+1.81%</span>
+              <span class="quant-value positive">+1.59%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Trimestre</span>
-              <span class="quant-value negative">-2.32%</span>
+              <span class="quant-value negative">-2.54%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Semestre</span>
-              <span class="quant-value negative">-9.60%</span>
+              <span class="quant-value negative">-9.80%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">12 Meses</span>
-              <span class="quant-value negative">-13.70%</span>
+              <span class="quant-value negative">-14.37%</span>
             </div>
 <div class="quant-cell">
               <span class="quant-label">Ano (YTD)</span>
-              <span class="quant-value negative">-9.60%</span>
+              <span class="quant-value negative">-9.80%</span>
             </div>
           </div>
 
-          <p class="analise-tecnica">O Mini Dólar Futuro (WDO) apresentou uma consolidação no pregão, com uma variação diária de -0.19%, indicando uma tendência de curtíssimo prazo lateralizada. Considerando a performance em prazos mais longos, o movimento do dia contraria a tendência semanal e mensal positiva, o que pode sugerir uma possível exaustão ou tentativa de pivô. Com a variação trimestral e semestral negativa, o ativo pode estar se aproximando de mínimas recentes relevantes. Os níveis técnicos mais próximos são suporte em 5.145 e resistência em 5.182. O viés esperado para o próximo pregão é de lateralização, com a manutenção acima de 5.145 fortalecendo o cenário de consolidação, enquanto a perda desse suporte tende a abrir espaço para uma possível continuação da tendência de baixa. A região de preço que confirma o cenário é a faixa entre 5.145 e 5.182.</p>
+          <div class="sr-head">
+            <span class="quote-section-title">Suportes e Resistências</span>
+            <button class="copy-btn copy-all" type="button" data-copy="Resistências: 5.160 / 5.170 / 5.180 | Suportes: 5.150 / 5.140 / 5.130" aria-label="Copiar suportes e resistências">Copiar S/R</button>
+          </div>
+          <div class="sr-panel">
+            <div class="sr-group sr-res">
+              <span class="sr-group-title">Resistências</span>
+<div class="sr-level">
+              <span class="sr-tag">R1</span>
+              <span class="sr-value">5.160</span>
+              <button class="copy-btn" type="button" data-copy="5.160" aria-label="Copiar R1">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">R2</span>
+              <span class="sr-value">5.170</span>
+              <button class="copy-btn" type="button" data-copy="5.170" aria-label="Copiar R2">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">R3</span>
+              <span class="sr-value">5.180</span>
+              <button class="copy-btn" type="button" data-copy="5.180" aria-label="Copiar R3">Copiar</button>
+            </div>
+            </div>
+            <div class="sr-group sr-sup">
+              <span class="sr-group-title">Suportes</span>
+<div class="sr-level">
+              <span class="sr-tag">S1</span>
+              <span class="sr-value">5.150</span>
+              <button class="copy-btn" type="button" data-copy="5.150" aria-label="Copiar S1">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">S2</span>
+              <span class="sr-value">5.140</span>
+              <button class="copy-btn" type="button" data-copy="5.140" aria-label="Copiar S2">Copiar</button>
+            </div>
+<div class="sr-level">
+              <span class="sr-tag">S3</span>
+              <span class="sr-value">5.130</span>
+              <button class="copy-btn" type="button" data-copy="5.130" aria-label="Copiar S3">Copiar</button>
+            </div>
+            </div>
+          </div>
+
+          <div class="analise-versao">
+            <div class="analise-versao-head">
+              <span class="analise-versao-label">Versão Trader</span>
+              <button class="copy-btn copy-text" type="button" aria-label="Copiar Versão Trader">Copiar texto</button>
+            </div>
+            <p class="analise-tecnica">O ativo Mini Dólar Futuro (WDO) encerrou o último pregão em baixa, com uma variação diária de -0.22%, o que indica uma tendência de baixa no curto prazo. Considerando que o ativo inicia a semana pressionado, com uma abertura de semana em baixa, e que os prazos mais longos, como o mês, trimestre, semestre e ano, apresentam movimentações variadas, a direção do mercado parece ser influenciada pela pressão vendedora recente. A resistência mais próxima da máxima do dia, em 5.172, e o suporte mais próximo da mínima do dia, em 5.135, servem como referências importantes para o próximo pregão. Se o preço se mantiver abaixo da resistência, pode haver espaço para testar o suporte, enquanto a superação da resistência poderia indicar uma mudança na direção do mercado. Com o cenário atual, a movimentação de baixa parece ser a mais provável, mas é importante considerar as flutuações do mercado. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
+          </div>
+          <div class="analise-versao">
+            <div class="analise-versao-head">
+              <span class="analise-versao-label">Versão Técnica</span>
+              <button class="copy-btn copy-text" type="button" aria-label="Copiar Versão Técnica">Copiar texto</button>
+            </div>
+            <p class="analise-tecnica">O ativo Mini Dólar Futuro (WDO) registrou uma variação diária negativa de -0.22%, alinhando-se com a abertura de semana em baixa. Os prazos mais longos, como o mês, trimestre, semestre e ano, apresentam variações que compõem o pano de fundo, mas não determinam a direção do mercado no curto prazo. A resistência imediata, derivada da máxima do dia em 5.172, e o suporte, próximo da mínima do dia em 5.135, delimitam a faixa de negociação. A manutenção abaixo da resistência valida a continuidade da pressão vendedora, com possibilidade de teste do suporte. A superação da resistência poderia neutralizar o viés de baixa. Com base nos dados, a tendência de baixa no curto prazo parece ser a mais provável, mas é fundamental considerar as flutuações do mercado. <strong>Paciência e gerenciamento de risco serão essenciais no próximo pregão.</strong></p>
+          </div>
 
           <div class="meta">
-            <span>Abertura: <strong>5.172</strong></span>
             <span>Timeframe: <strong>Gráfico Intraday de 15 minutos (M15)</strong></span>
-            <span>Última coleta: <strong>21/06/2026, 01:53</strong></span>
+            <span>Última coleta: <strong>23/06/2026, 01:32</strong></span>
           </div>
         </div>
       </aside>
@@ -228,5 +358,49 @@
       <a class="share" href="#" onclick="navigator.clipboard.writeText(location.href); this.innerText='Link copiado'; return false;">Compartilhar link</a>
     </footer>
   </div>
+
+  <script>
+    // Botões "Copiar": valor único via data-copy; texto da análise via .copy-text.
+    (function () {
+      function feedback(btn) {
+        var original = btn.getAttribute("data-label") || btn.textContent;
+        btn.setAttribute("data-label", original);
+        btn.textContent = "Copiado!";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove("copied");
+        }, 1200);
+      }
+      function copy(text, btn) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { feedback(btn); }).catch(function () { fallback(text, btn); });
+        } else {
+          fallback(text, btn);
+        }
+      }
+      function fallback(text, btn) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); feedback(btn); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest(".copy-btn");
+        if (!btn) return;
+        var text = btn.getAttribute("data-copy");
+        if (text == null && btn.classList.contains("copy-text")) {
+          var wrap = btn.closest(".analise-versao");
+          var p = wrap && wrap.querySelector(".analise-tecnica");
+          text = p ? p.innerText : "";
+        }
+        if (text != null) copy(text, btn);
+      });
+    })();
+  </script>
 </body>
 </html>
